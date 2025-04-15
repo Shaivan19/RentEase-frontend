@@ -82,14 +82,7 @@ const LandlordSidebar = ({ isOpen, onClose }) => {
   const [openMenus, setOpenMenus] = useState({});
 
   const user = JSON.parse(localStorage.getItem("user")) || {};
-<<<<<<< HEAD
-  const userInitials = user.name ? user.name.split(" ").map((n) => n[0]).join("").toUpperCase() : '';
-=======
-  console.log("User Data:", user);
-  
   const userInitials = user.name ? user.name.split(" ").map((n) => n[0]).join("").toUpperCase() : 'L';
-  console.log("User Initials:", userInitials);
->>>>>>> 006a48759ff01842cdea22feec6a6135197e021c
 
   const handleMenuClick = (title) => {
     setOpenMenus((prev) => ({
@@ -139,14 +132,10 @@ const LandlordSidebar = ({ isOpen, onClose }) => {
         </Avatar>
         <Box sx={{ flexGrow: 1 }}>
           <Typography variant="subtitle1" fontWeight={600}>
-<<<<<<< HEAD
-          {user.role || "Landlord"}
-=======
-          {user.username || "Landlord"}
->>>>>>> 006a48759ff01842cdea22feec6a6135197e021c
+            {user.username || "Landlord"}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-          {user.userType?.charAt(0).toUpperCase() + user.userType?.slice(1) || 'Landlord'}
+            {user.userType?.charAt(0).toUpperCase() + user.userType?.slice(1) || 'Landlord'}
           </Typography>
         </Box>
         {isMobile && (
