@@ -8,179 +8,223 @@ import {
   TableRow,
   Paper,
   Typography,
-  Chip,
-  Box,
-  IconButton,
-  Tooltip,
-  useTheme,
-  Avatar,
   Stack,
+  Avatar,
+  Chip,
+  Button,
+  Box,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import {
-  CheckCircle as CheckCircleIcon,
-  Cancel as CancelIcon,
-  Pending as PendingIcon,
+  Event,
+  AccessTime,
+  LocationOn,
+  CheckCircle,
+  Cancel,
+  Schedule,
 } from "@mui/icons-material";
 import axios from "axios";
+import { toast } from "react-toastify";
 
-const getStatusColor = (status) => {
-  switch (status.toLowerCase()) {
-    case "pending":
-      return "warning";
-    case "approved":
-      return "success";
-    case "rejected":
-      return "error";
-    default:
-      return "default";
-  }
-};
-
-const getStatusIcon = (status) => {
-  switch (status.toLowerCase()) {
-    case "pending":
-      return <PendingIcon />;
-    case "approved":
-      return <CheckCircleIcon />;
-    case "rejected":
-      return <CancelIcon />;
-    default:
-      return null;
-  }
-};
-
-const TenantRequestsTable = ({ requests = [] }) => {
+const TenantRequestTable = ({ requests, onUpdate }) => {
   const theme = useTheme();
 
-  const handleStatusChange = async (requestId, newStatus) => {
+  const handleConfirmVisit = async (visitId) => {
     try {
-      await axios.put(`/api/tenant-requests/${requestId}`, { status: newStatus });
-      // Refresh the parent component's data
-      window.location.reload();
+      const userData = JSON.parse(localStorage.getItem('user'));
+      if (!userData || !userData.token) {
+        toast.error("Please login again");
+        return;
+      }
+
+      const response = await axios.put(`/visit/confirm/${visitId}`, {}, {
+        headers: {
+          Authorization: `Bearer ${userData.token}`
+        }
+      });
+
+      if (response.data.success) {
+        toast.success("Visit confirmed successfully");
+        if (typeof onUpdate === 'function') {
+          onUpdate();
+        }
+      }
     } catch (error) {
-      console.error("Error updating request status:", error);
+      console.error("Error confirming visit:", error);
+      toast.error(error.response?.data?.message || "Failed to confirm visit");
+    }
+  };
+
+  const handleRejectVisit = async (visitId) => {
+    try {
+      const userData = JSON.parse(localStorage.getItem('user'));
+      if (!userData || !userData.token) {
+        toast.error("Please login again");
+        return;
+      }
+
+      const response = await axios.put(`/visit-properties/reject/${visitId}`, {}, {
+        headers: {
+          Authorization: `Bearer ${userData.token}`
+        }
+      });
+
+      if (response.data.success) {
+        toast.success("Visit rejected successfully");
+        if (typeof onUpdate === 'function') {
+          onUpdate();
+        }
+      }
+    } catch (error) {
+      console.error("Error rejecting visit:", error);
+      toast.error(error.response?.data?.message || "Failed to reject visit");
+    }
+  };
+
+  const getStatusChip = (status) => {
+    switch (status.toLowerCase()) {
+      case "scheduled":
+        return <Chip label="Scheduled" color="primary" size="small" />;
+      case "rescheduled":
+        return <Chip label="Rescheduled" color="warning" size="small" />;
+      case "cancelled":
+        return <Chip label="Cancelled" color="error" size="small" />;
+      case "confirmed":
+        return <Chip label="Confirmed" color="success" size="small" />;
+      case "rejected":
+        return <Chip label="Rejected" color="error" size="small" />;
+      default:
+        return <Chip label={status} color="default" size="small" />;
+    }
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status.toLowerCase()) {
+      case "scheduled":
+        return <Event color="primary" fontSize="small" />;
+      case "rescheduled":
+        return <Schedule color="warning" fontSize="small" />;
+      case "cancelled":
+        return <Cancel color="error" fontSize="small" />;
+      case "confirmed":
+        return <CheckCircle color="success" fontSize="small" />;
+      case "rejected":
+        return <Cancel color="error" fontSize="small" />;
+      default:
+        return <Event color="default" fontSize="small" />;
     }
   };
 
   return (
-    <TableContainer
-      component={Paper}
-      sx={{
-        boxShadow: 0,
-        borderRadius: 2,
-        border: `1px solid ${theme.palette.divider}`,
-      }}
-    >
+    <TableContainer component={Paper} elevation={0}>
       <Table>
         <TableHead>
           <TableRow>
-            <TableCell>
-              <Typography variant="subtitle2" fontWeight={600} color="text.secondary">
-                Tenant
-              </Typography>
-            </TableCell>
-            <TableCell>
-              <Typography variant="subtitle2" fontWeight={600} color="text.secondary">
-                Property
-              </Typography>
-            </TableCell>
-            <TableCell>
-              <Typography variant="subtitle2" fontWeight={600} color="text.secondary">
-                Date
-              </Typography>
-            </TableCell>
-            <TableCell align="right">
-              <Typography variant="subtitle2" fontWeight={600} color="text.secondary">
-                Status
-              </Typography>
-            </TableCell>
+            <TableCell>Tenant</TableCell>
+            <TableCell>Property</TableCell>
+            <TableCell>Visit Details</TableCell>
+            <TableCell>Status</TableCell>
+            <TableCell>Actions</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
-          {requests.map((req) => (
-            <TableRow
-              key={req._id}
-              sx={{
-                "&:hover": {
-                  backgroundColor: theme.palette.action.hover,
-                },
-              }}
-            >
-              <TableCell>
-                <Stack direction="row" spacing={2} alignItems="center">
-                  <Avatar
-                    sx={{
-                      bgcolor: theme.palette.primary.main,
-                      width: 32,
-                      height: 32,
-                      fontSize: "0.875rem",
-                    }}
-                  >
-                    {req.tenant.name.charAt(0)}
-                  </Avatar>
-                  <Typography variant="body2" fontWeight={500}>
-                    {req.tenant.name}
-                  </Typography>
-                </Stack>
-              </TableCell>
-              <TableCell>
-                <Typography variant="body2" color="text.secondary">
-                  {req.property.name}
-                </Typography>
-              </TableCell>
-              <TableCell>
-                <Typography variant="body2" color="text.secondary">
-                  {new Date(req.createdAt).toLocaleDateString()}
-                </Typography>
-              </TableCell>
-              <TableCell align="right">
-                <Box sx={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 1 }}>
-                  <Chip
-                    label={req.status}
-                    color={getStatusColor(req.status)}
-                    size="small"
-                    icon={getStatusIcon(req.status)}
-                    sx={{
-                      borderRadius: 1,
-                      "& .MuiChip-icon": {
-                        fontSize: 16,
-                      },
-                    }}
-                  />
-                  {req.status.toLowerCase() === "pending" && (
-                    <Box sx={{ display: "flex", gap: 0.5 }}>
-                      <Tooltip title="Approve">
-                        <IconButton 
-                          size="small" 
-                          color="success"
-                          onClick={() => handleStatusChange(req._id, "approved")}
-                        >
-                          <CheckCircleIcon />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Reject">
-                        <IconButton 
-                          size="small" 
-                          color="error"
-                          onClick={() => handleStatusChange(req._id, "rejected")}
-                        >
-                          <CancelIcon />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  )}
-                </Box>
-              </TableCell>
-            </TableRow>
-          ))}
-          {requests.length === 0 && (
+          {requests.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={4} align="center">
+              <TableCell colSpan={5} align="center">
                 <Typography variant="body2" color="text.secondary">
-                  No tenant requests found
+                  No visit requests found
                 </Typography>
               </TableCell>
             </TableRow>
+          ) : (
+            requests.map((request) => (
+              <TableRow
+                key={request.id}
+                sx={{
+                  "&:hover": {
+                    backgroundColor: theme.palette.action.hover,
+                  },
+                }}
+              >
+                <TableCell>
+                  <Stack direction="row" spacing={2} alignItems="center">
+                    <Avatar
+                      sx={{
+                        bgcolor: theme.palette.primary.main,
+                        width: 32,
+                        height: 32,
+                        fontSize: "0.875rem",
+                      }}
+                    >
+                      {request.tenantName?.charAt(0) || "T"}
+                    </Avatar>
+                    <Box>
+                      <Typography variant="body2" fontWeight={500}>
+                        {request.tenantName || "Unknown Tenant"}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {request.tenantEmail || ""}
+                      </Typography>
+                    </Box>
+                  </Stack>
+                </TableCell>
+                <TableCell>
+                  <Typography variant="body2" fontWeight={500}>
+                    {request.propertyName || "Unknown Property"}
+                  </Typography>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <LocationOn color="primary" fontSize="small" />
+                    <Typography variant="caption" color="text.secondary">
+                      {request.address || "Location not available"}
+                    </Typography>
+                  </Stack>
+                </TableCell>
+                <TableCell>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Event color="primary" fontSize="small" />
+                    <Typography variant="body2">
+                      {new Date(request.visitDate).toLocaleDateString()}
+                    </Typography>
+                    <AccessTime color="primary" fontSize="small" />
+                    <Typography variant="body2">
+                      {request.visitTime || "No time specified"}
+                    </Typography>
+                  </Stack>
+                </TableCell>
+                <TableCell>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    {getStatusIcon(request.status)}
+                    {getStatusChip(request.status)}
+                  </Stack>
+                </TableCell>
+                <TableCell>
+                  <Stack direction="row" spacing={1}>
+                    {request.status.toLowerCase() === "scheduled" && (
+                      <>
+                        <Button
+                          variant="contained"
+                          color="success"
+                          size="small"
+                          startIcon={<CheckCircle />}
+                          onClick={() => handleConfirmVisit(request.id)}
+                        >
+                          Confirm
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          color="error"
+                          size="small"
+                          startIcon={<Cancel />}
+                          onClick={() => handleRejectVisit(request.id)}
+                        >
+                          Reject
+                        </Button>
+                      </>
+                    )}
+                  </Stack>
+                </TableCell>
+              </TableRow>
+            ))
           )}
         </TableBody>
       </Table>
@@ -188,4 +232,4 @@ const TenantRequestsTable = ({ requests = [] }) => {
   );
 };
 
-export default TenantRequestsTable;
+export default TenantRequestTable;

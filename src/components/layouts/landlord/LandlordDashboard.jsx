@@ -10,6 +10,11 @@ import {
   Tooltip,
   Divider,
   CircularProgress,
+  Badge,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
 } from "@mui/material";
 import {
   MonetizationOn,
@@ -19,6 +24,9 @@ import {
   NotificationsActive,
   Refresh,
   Upcoming,
+  Event,
+  Cancel,
+  Schedule,
 } from "@mui/icons-material";
 import EarningsChart from "./components/EarningChart";
 import TenantRequestsTable from "./components/TenantRequestTable";
@@ -31,65 +39,61 @@ const LandlordDashboard = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [loading, setLoading] = useState(true);
+  const [notifications, setNotifications] = useState([]);
+  const [notificationsAnchor, setNotificationsAnchor] = useState(null);
+  const [user, setUser] = useState(null);
 
   const [dashboardData, setDashboardData] = useState({
-    properties:[],
-    upcomingVisits:[],
-    recentBookings:[],
-    stats:{
+    properties: [],
+    upcomingVisits: [],
+    recentBookings: [],
+    stats: {
       totalProperties: 0,
       occupiedProperties: 0,
       occupancyRate: 0,
       totalBookings: 0,
       upcomingVisitsCount: 0,
     }
-  //   totalProperties: 0,
-  //   pendingRequests: 0,
-  //   totalEarnings: 0,
-  //   earningsTrend: "0",
-  //   monthlyEarnings: [],
-  //   tenantRequests: []
   });
 
-  // const fetchDashboardData = async () => {
-  //   setLoading(true);
-  //   try {
-  //     const userData = JSON.parse(localStorage.getItem('user'));
-  //     const response = await axios.get(`/landlord/dashboard/${userData.userId}`);
-  //     setDashboardData(response.data);
-  //   } catch (error) {
-  //     console.error("Error fetching dashboard data:", error);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
+  useEffect(() => {
+    // Get user data from localStorage
+    const userData = JSON.parse(localStorage.getItem('user'));
+    if (userData) {
+      setUser(userData);
+    }
+  }, []);
 
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
-      const user = JSON.parse(localStorage.getItem('user'));
-      console.log("User Data:", user); // Debug user data
-  
-      if (!user || !user.token) {
+      const userData = JSON.parse(localStorage.getItem('user'));
+      if (!userData || !userData.token) {
         console.error("No user token found");
         return;
       }
-  
+
       const response = await axios.get('/landlord/dashboard', {
         headers: {
-          Authorization: `Bearer ${user.token}`
+          Authorization: `Bearer ${userData.token}`
         }
       });
-  
-      console.log("Raw API Response:", response); // Debug full response
-      console.log("Response Data:", response.data); // Debug response data
-  
+
       if (response.data.success) {
         const dashboardData = response.data.data;
-        console.log("Dashboard Stats:", dashboardData.stats); // Debug stats specifically
         setDashboardData(dashboardData);
-      } else {
-        console.error("API request was not successful:", response.data);
+        
+        // Transform visits into notifications
+        const visitNotifications = dashboardData.upcomingVisits.map(visit => ({
+          id: visit.id,
+          type: 'visit',
+          title: 'Property Visit',
+          message: `${visit.tenantName} has requested to visit ${visit.propertyName}`,
+          time: new Date(visit.visitDate).toLocaleString(),
+          status: visit.status
+        }));
+        
+        setNotifications(visitNotifications);
       }
     } catch (error) {
       console.error("Error fetching dashboard data:", error.response || error);
@@ -99,14 +103,37 @@ const LandlordDashboard = () => {
   };
 
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem('user'));
-    if (!user || !user.token) {
-    fetchDashboardData();}
+    fetchDashboardData();
+    // Set up polling for new notifications
+    const interval = setInterval(fetchDashboardData, 30000); // Poll every 30 seconds
+    return () => clearInterval(interval);
   }, []);
+
+  const handleNotificationsOpen = (event) => {
+    setNotificationsAnchor(event.currentTarget);
+  };
+
+  const handleNotificationsClose = () => {
+    setNotificationsAnchor(null);
+  };
+
+  const getNotificationIcon = (type, status) => {
+    switch (status) {
+      case 'scheduled':
+        return <Event color="primary" />;
+      case 'rescheduled':
+        return <Schedule color="warning" />;
+      case 'cancelled':
+        return <Cancel color="error" />;
+      default:
+        return <NotificationsActive color="primary" />;
+    }
+  };
 
   const pendingBookings = dashboardData.recentBookings.filter((booking) => booking.status.toLowerCase() === "pending").length;
 
-  const totalEarnings = dashboardData.properties.filter(property => property.status ==='Occupied').reduce((total, property)=> total + (property.price || 0),0)
+  const totalEarnings = dashboardData.properties.filter(property => property.status === 'Occupied')
+    .reduce((total, property) => total + (property.price || 0), 0);
 
   const handleRefresh = () => {
     setLastUpdated(new Date());
@@ -140,12 +167,75 @@ const LandlordDashboard = () => {
             </IconButton>
           </Tooltip>
           <Tooltip title="Notifications">
-            <IconButton color="primary">
-              <NotificationsActive />
+            <IconButton 
+              color="primary"
+              onClick={handleNotificationsOpen}
+            >
+              <Badge badgeContent={notifications.length} color="error">
+                <NotificationsActive />
+              </Badge>
             </IconButton>
           </Tooltip>
         </Box>
       </Box>
+
+      {/* Notifications Menu */}
+      <Menu
+        anchorEl={notificationsAnchor}
+        open={Boolean(notificationsAnchor)}
+        onClose={handleNotificationsClose}
+        PaperProps={{
+          sx: {
+            maxHeight: 400,
+            width: 360,
+            mt: 1,
+          },
+        }}
+      >
+        <Box sx={{ p: 2, borderBottom: `1px solid ${theme.palette.divider}` }}>
+          <Typography variant="h6" fontWeight={600}>
+            Notifications
+          </Typography>
+        </Box>
+        {notifications.length === 0 ? (
+          <MenuItem>
+            <Typography variant="body2" color="text.secondary">
+              No new notifications
+            </Typography>
+          </MenuItem>
+        ) : (
+          notifications.map((notification) => (
+            <MenuItem
+              key={notification.id}
+              onClick={handleNotificationsClose}
+              sx={{
+                py: 1.5,
+                px: 2,
+                "&:hover": {
+                  backgroundColor: theme.palette.action.hover,
+                },
+              }}
+            >
+              <ListItemIcon>
+                {getNotificationIcon(notification.type, notification.status)}
+              </ListItemIcon>
+              <ListItemText
+                primary={notification.title}
+                secondary={
+                  <>
+                    <Typography variant="body2" color="text.secondary">
+                      {notification.message}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {notification.time}
+                    </Typography>
+                  </>
+                }
+              />
+            </MenuItem>
+          ))
+        )}
+      </Menu>
 
       {/* Stats Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
@@ -162,14 +252,14 @@ const LandlordDashboard = () => {
               title: "Pending Requests",
               value: pendingBookings,
               icon: <Assignment fontSize="large" />,
-              trend: `${dashboardData?.stats?.upcomingVisitsCount??0}Visits Scheduled`,
-              trendColor: pendingBookings > 0 ? "warning.main": "success.main",
+              trend: `${dashboardData?.stats?.upcomingVisitsCount ?? 0} Visits Scheduled`,
+              trendColor: pendingBookings > 0 ? "warning.main" : "success.main",
             },
             {
               title: "Total Earnings",
-              value: formatToRupees(dashboardData?.properties?.filter(property => property.status ==='Occupied').reduce((total, property)=> total + (property.price || 0),0)),
+              value: formatToRupees(totalEarnings),
               icon: <MonetizationOn fontSize="large" />,
-              trend: `${dashboardData?.stats?.occupiedProperties??0} Rented Properties`,
+              trend: `${dashboardData?.stats?.occupiedProperties ?? 0} Rented Properties`,
               trendColor: "success.main",
             },
           ]}
@@ -225,7 +315,7 @@ const LandlordDashboard = () => {
               </Typography>
             </Box>
             <Divider sx={{ mb: 3 }} />
-            <TenantRequestsTable requests={dashboardData.tenantRequests} />
+            <TenantRequestsTable requests={dashboardData.upcomingVisits} />
           </Paper>
         </Grid>
       </Grid>
