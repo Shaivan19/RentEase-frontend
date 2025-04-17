@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { UserSidebar } from './components/layouts/UserSidebar'
+// import { UserSidebar } from './components/layouts/UserSidebar'
 // import './App.css'
 import "./assets/css/Adminlte.css"
 import "./assets/css/adminlte.min.css"
@@ -16,7 +16,7 @@ import TenantDashboard from './components/layouts/tenant/TenantDashboard'
 import ContactUs from './components/common/ContactUs'
 import LandingPage from './components/common/LandingPage'
 import LandlordDashboard from './components/layouts/landlord/LandlordDashboard'
-import MyProperties from './components/layouts/landlord/MyProperties'
+// import MyProperties from './components/layouts/landlord/MyProperties'
 import LandlordLayout from './components/layouts/landlord/LandlordLayout'
 import AddProperty from './components/layouts/landlord/AddProperty'
 import TermsAndConditions from './components/common/TnC'
@@ -34,6 +34,7 @@ import { isLoggedIn, getUserType } from './utils/auth'
 import SavedProperties from './components/layouts/tenant/components/SavedProperties'
 import ScheduledVisits from './components/layouts/tenant/components/ScheduledVisits'
 import MyBookings from './components/layouts/tenant/components/MyBookings'
+import { AdminSidebar } from './components/layouts/admin/AdminSidebar'
 // import ResetPassword from './components/common/ResetPassword'
 
 // Protected route component
@@ -117,7 +118,7 @@ function App() {
               path='/user' 
               element={
                 <ProtectedRoute>
-                  <UserSidebar/>
+                  <AdminSidebar/>
                 </ProtectedRoute>
               }
             >
