@@ -27,16 +27,23 @@ const TenantSidebar = ({ drawerOpen, toggleDrawer }) => {
   };
 
   return (
-    <Drawer variant="temporary" 
-            open={drawerOpen} 
-            onClose={handleDrawerClose} 
-            sx={{ 
-                "& .MuiDrawer-paper": { 
-                  width: 280, 
-                  backgroundColor: "#1e1e2d", 
-                  color: "white" 
-                  } 
-                }}>
+    <Drawer 
+      variant="temporary" 
+      open={drawerOpen} 
+      onClose={handleDrawerClose} 
+      sx={{ 
+        "& .MuiDrawer-paper": { 
+          width: 280, 
+          backgroundColor: "#1e1e2d", 
+          color: "white",
+          borderRight: "none",
+          boxSizing: "border-box"
+        },
+        "& .MuiBackdrop-root": {
+          backgroundColor: "rgba(0, 0, 0, 0.5)"
+        }
+      }}
+    >
       
       <List>
        {/* Dashboard */}

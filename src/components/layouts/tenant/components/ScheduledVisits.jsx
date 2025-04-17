@@ -433,62 +433,52 @@ const ScheduledVisits = ({ onSidebarToggle }) => {
   return (
     <ThemeProvider theme={defaultTheme}>
       <Box 
-        component="main" 
         sx={{ 
-          flexGrow: 1,
           width: '100%',
           minHeight: '100vh',
           backgroundColor: '#f5f5f5',
-          overflow: 'hidden'
+          p: { xs: 2, md: 3 },
+          boxSizing: 'border-box'
         }}
       >
-        <Box sx={{ p: { xs: 2, sm: 3 }, width: '100%' }}>
-          {/* Header Section */}
-          <Box sx={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center', 
-            mb: 4,
-            width: '100%'
-          }}>
+        {/* Header Section */}
+        <Container maxWidth="xl" sx={{ mb: 4 }}>
+          <Box 
+            sx={{ 
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              width: '100%'
+            }}
+          >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <IconButton
                 color="inherit"
                 aria-label="open drawer"
                 edge="start"
                 onClick={onSidebarToggle}
-                sx={{ 
-                  mr: 2,
-                  display: { xs: 'block', md: 'none' }
-                }}
+                sx={{ display: { xs: 'flex', sm: 'none' } }}
               >
                 <MenuIcon />
               </IconButton>
-              <Typography variant="h4" component="h1" sx={{ 
-                fontWeight: 700,
-                background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent'
-              }}>
-                Scheduled Visits
-              </Typography>
+              <Typography variant="h4" sx={{ fontWeight: 600, color: '#0088ff' }}>
+              Scheduled Visits
+            </Typography>
             </Box>
             <Stack direction="row" spacing={2}>
-              <Button
-                variant="contained"
-                startIcon={<Add />}
-                onClick={() => setOpenNewVisitDialog(true)}
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={() => setOpenNewVisitDialog(true)}
                 sx={{
-                  background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
-                  color: 'white',
-                  boxShadow: '0 3px 5px 2px rgba(33, 203, 243, .3)',
+                  backgroundColor: '#0088ff',
                   '&:hover': {
-                    background: 'linear-gradient(45deg, #1976D2 30%, #21CBF3 90%)',
+                    backgroundColor: '#0066cc'
                   }
                 }}
-              >
-                Schedule New Visit
-              </Button>
+            >
+              Schedule New Visit
+            </Button>
               <ToggleButtonGroup
                 value={viewMode}
                 exclusive
@@ -505,23 +495,11 @@ const ScheduledVisits = ({ onSidebarToggle }) => {
             </Stack>
           </Box>
 
-          {/* Stats Dashboard */}
-          <Grid container spacing={3} sx={{ mb: 4, width: '100%' }}>
+          {/* Stats Cards */}
+          <Grid container spacing={3} sx={{ mb: 4, mt: 2 }}>
             {Object.entries(getVisitStats()).map(([key, value]) => (
               <Grid item xs={12} sm={6} md={2.4} key={key}>
-                <Paper
-                  elevation={0}
-                  sx={{
-                    p: 3,
-                    borderRadius: 2,
-                    backgroundColor: 'white',
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
+                <StatsCard>
                   <Box sx={{ mb: 2 }}>
                     {key === 'total' ? <Dashboard sx={{ color: '#0088ff' }} /> :
                      key === 'confirmed' ? <CheckCircleOutline sx={{ color: '#4caf50' }} /> :
@@ -535,13 +513,13 @@ const ScheduledVisits = ({ onSidebarToggle }) => {
                   <Typography variant="body2" color="text.secondary" sx={{ textTransform: 'capitalize' }}>
                     {key.replace(/([A-Z])/g, ' $1').trim()}
                   </Typography>
-                </Paper>
+                </StatsCard>
               </Grid>
             ))}
           </Grid>
 
           {/* Main Content */}
-          <Box sx={{ width: '100%', overflow: 'auto' }}>
+          <Box sx={{ width: '100%' }}>
             {loading ? (
               <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
                 <CircularProgress />
@@ -551,19 +529,22 @@ const ScheduledVisits = ({ onSidebarToggle }) => {
                 {error}
               </Alert>
             ) : visits.length === 0 ? (
-              <Paper sx={{ 
-                p: 4, 
-                textAlign: 'center',
-                borderRadius: 2,
-                backgroundColor: 'background.paper',
-                boxShadow: theme => theme.shadows[2]
-              }}>
-                <Typography variant="h6" color="text.secondary" gutterBottom>
-                  No scheduled visits found
-                </Typography>
-                <Button
-                  variant="contained"
-                  onClick={() => navigate('/properties')}
+              <Paper 
+                elevation={0}
+                sx={{ 
+                  p: 4, 
+                  textAlign: 'center',
+                  borderRadius: 2,
+                  backgroundColor: 'white',
+                  width: '100%'
+                }}
+              >
+              <Typography variant="h6" color="text.secondary" gutterBottom>
+                No scheduled visits found
+              </Typography>
+              <Button
+                variant="contained"
+                onClick={() => navigate('/properties')}
                   sx={{ 
                     mt: 2,
                     backgroundColor: '#0088ff',
@@ -571,219 +552,221 @@ const ScheduledVisits = ({ onSidebarToggle }) => {
                       backgroundColor: '#0066cc'
                     }
                   }}
-                >
-                  Browse Properties
-                </Button>
+              >
+                Browse Properties
+              </Button>
               </Paper>
             ) : viewMode === 'table' ? (
-              <TableContainer 
-                component={Paper} 
+              <Paper 
+                elevation={0}
                 sx={{ 
-                  borderRadius: 2,
                   width: '100%',
-                  overflowX: 'auto',
-                  boxShadow: theme => theme.shadows[2],
-                  '& .MuiTableCell-root': {
-                    borderBottom: '1px solid rgba(224, 224, 224, 0.4)'
-                  }
+                  overflow: 'hidden',
+                  borderRadius: 2,
+                  backgroundColor: 'white'
                 }}
               >
-                <Table sx={{ minWidth: '100%' }}>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell width="45%">Property</TableCell>
-                      <TableCell width="20%">Location</TableCell>
-                      <TableCell width="15%">Date & Time</TableCell>
-                      <TableCell width="10%">Status</TableCell>
-                      <TableCell width="10%">Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {visits.map((visit) => (
-                      <TableRow key={visit._id}>
-                        <TableCell>
-                          <Stack direction="row" spacing={3} alignItems="flex-start">
-                            {(() => {
-                              const propertyImages = [
-                                visit?.property?.propertyImages,
-                                visit?.property?.images,
-                                visit?.property?.imageUrls,
-                                visit?.property?.propertyImage
-                              ].find(imgs => Array.isArray(imgs) && imgs.length > 0) || [];
+                <TableContainer>
+                  <Table sx={{ minWidth: '100%' }}>
+                <TableHead>
+                  <TableRow>
+                        <TableCell width="45%">Property</TableCell>
+                        <TableCell width="20%">Location</TableCell>
+                        <TableCell width="15%">Date & Time</TableCell>
+                        <TableCell width="10%">Status</TableCell>
+                        <TableCell width="10%">Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {visits.map((visit) => (
+                    <TableRow key={visit._id}>
+                      <TableCell>
+                            <Stack direction="row" spacing={3} alignItems="flex-start">
+                              {(() => {
+                                const propertyImages = [
+                                  visit?.property?.propertyImages,
+                                  visit?.property?.images,
+                                  visit?.property?.imageUrls,
+                                  visit?.property?.propertyImage
+                                ].find(imgs => Array.isArray(imgs) && imgs.length > 0) || [];
 
-                              const singleImage = !Array.isArray(propertyImages) ? propertyImages : null;
+                                const singleImage = !Array.isArray(propertyImages) ? propertyImages : null;
 
-                              return propertyImages.length > 0 || singleImage ? (
-                                Array.isArray(propertyImages) && propertyImages.length > 0 ? (
-                                  <Carousel
-                                    animation="slide"
-                                    autoPlay={true}
-                                    interval={4000}
-                                    indicators={propertyImages.length > 1}
-                                    navButtonsAlwaysVisible={false}
-                                    navButtonsAlwaysInvisible={true}
-                                    cycleNavigation={true}
-                                    sx={{
+                                return propertyImages.length > 0 || singleImage ? (
+                                  Array.isArray(propertyImages) && propertyImages.length > 0 ? (
+                                    <Carousel
+                                      animation="slide"
+                                      autoPlay={true}
+                                      interval={4000}
+                                      indicators={propertyImages.length > 1}
+                                      navButtonsAlwaysVisible={false}
+                                      navButtonsAlwaysInvisible={true}
+                                      cycleNavigation={true}
+                                      sx={{
+                                        width: 250,
+                                        height: 180,
+                                        borderRadius: 2,
+                                        overflow: 'hidden',
+                                        boxShadow: 1,
+                                        '& .MuiPaper-root': {
+                                          borderRadius: 0,
+                                        },
+                                        '& .MuiIndicator-root': {
+                                          color: 'white',
+                                        }
+                                      }}
+                                    >
+                                      {propertyImages.map((image, i) => (
+                                        <Box
+                                          key={i}
+                                          component="img"
+                                          src={image}
+                                          alt={`${visit.property?.title || 'Property'} - Image ${i + 1}`}
+                                          sx={{
+                                            height: 180,
+                                            width: '100%',
+                                            objectFit: 'cover',
+                                            display: 'block'
+                                          }}
+                                        />
+                                      ))}
+                                    </Carousel>
+                                  ) : (
+                            <CardMedia
+                              component="img"
+                                      sx={{ 
+                                        width: 250, 
+                                        height: 180, 
+                                        borderRadius: 2,
+                                        objectFit: 'cover',
+                                        boxShadow: 1
+                                      }}
+                                      image={singleImage}
+                              alt={visit.property?.title || 'Property Image'}
+                            />
+                                  )
+                          ) : (
+                            <Box
+                              sx={{
                                       width: 250,
                                       height: 180,
                                       borderRadius: 2,
-                                      overflow: 'hidden',
-                                      boxShadow: 1,
-                                      '& .MuiPaper-root': {
-                                        borderRadius: 0,
-                                      },
-                                      '& .MuiIndicator-root': {
-                                        color: 'white',
-                                      }
-                                    }}
-                                  >
-                                    {propertyImages.map((image, i) => (
-                                      <Box
-                                        key={i}
-                                        component="img"
-                                        src={image}
-                                        alt={`${visit.property?.title || 'Property'} - Image ${i + 1}`}
-                                        sx={{
-                                          height: 180,
-                                          width: '100%',
-                                          objectFit: 'cover',
-                                          display: 'block'
-                                        }}
-                                      />
-                                    ))}
-                                  </Carousel>
-                                ) : (
-                                  <CardMedia
-                                    component="img"
-                                    sx={{ 
-                                      width: 250, 
-                                      height: 180, 
-                                      borderRadius: 2,
-                                      objectFit: 'cover',
+                                      backgroundColor: 'grey.200',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
                                       boxShadow: 1
-                                    }}
-                                    image={singleImage}
-                                    alt={visit.property?.title || 'Property Image'}
-                                  />
-                                )
-                              ) : (
-                                <Box
-                                  sx={{
-                                    width: 250,
-                                    height: 180,
-                                    borderRadius: 2,
-                                    backgroundColor: 'grey.200',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    boxShadow: 1
+                              }}
+                            >
+                              <Typography variant="caption" color="text.secondary">
+                                No Image
+                              </Typography>
+                            </Box>
+                                );
+                              })()}
+                              <Stack spacing={1.5} sx={{ py: 1 }}>
+                                <Typography variant="body1" sx={{ 
+                                  wordBreak: 'break-word',
+                                  flexGrow: 1,
+                                  fontWeight: 500
+                                }}>
+                            {visit.property?.title || 'Unknown Property'}
+                          </Typography>
+                                <Button
+                                  variant="outlined"
+                                  size="small"
+                                  color="primary"
+                                  onClick={() => navigate(`/property/${visit.property?._id}`)}
+                                  sx={{ alignSelf: 'flex-start' }}
+                                >
+                                  View Property Details
+                                </Button>
+                              </Stack>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <LocationOn color="primary" fontSize="small" />
+                          <Typography variant="body2">
+                            {visit.property?.location || 'Location not available'}
+                          </Typography>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <Event color="primary" fontSize="small" />
+                          <Typography variant="body2">
+                                {visit.visitDate ? new Date(visit.visitDate).toLocaleDateString() : 'No date'}
+                          </Typography>
+                          <AccessTime color="primary" fontSize="small" />
+                          <Typography variant="body2">
+                                {visit.visitTime || 'No time'}
+                          </Typography>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
+                            <Chip
+                              label={getStatusText(visit.status)}
+                              color={getStatusColor(visit.status)}
+                              size="small"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Stack direction="row" spacing={1}>
+                              {(visit.status === 'pending' || visit.status === 'confirmed') && (
+                          <Button
+                            variant="outlined"
+                                  color="primary"
+                            size="small"
+                            onClick={() => openReschedule(visit)}
+                          >
+                            Reschedule
+                          </Button>
+                              )}
+                              {(visit.status === 'pending' || visit.status === 'confirmed') && (
+                          <Button
+                            variant="outlined"
+                                  color="error"
+                            size="small"
+                                  onClick={() => {
+                                    setVisitToCancel(visit);
+                                    setOpenCancelDialog(true);
+                                  }}
+                          >
+                            Cancel
+                          </Button>
+                              )}
+                              {(visit.status === 'cancelled' || visit.status === 'rejected') && (
+                                <Button
+                                  variant="outlined"
+                                  color="error"
+                                  size="small"
+                                  onClick={() => {
+                                    setVisitToRemove(visit);
+                                    setOpenRemoveDialog(true);
                                   }}
                                 >
-                                  <Typography variant="caption" color="text.secondary">
-                                    No Image
-                                  </Typography>
-                                </Box>
-                              );
-                            })()}
-                            <Stack spacing={1.5} sx={{ py: 1 }}>
-                              <Typography variant="body1" sx={{ 
-                                wordBreak: 'break-word',
-                                flexGrow: 1,
-                                fontWeight: 500
-                              }}>
-                                {visit.property?.title || 'Unknown Property'}
-                              </Typography>
-                              <Button
-                                variant="outlined"
-                                size="small"
-                                color="primary"
-                                onClick={() => navigate(`/property/${visit.property?._id}`)}
-                                sx={{ alignSelf: 'flex-start' }}
-                              >
-                                View Property Details
-                              </Button>
-                            </Stack>
-                          </Stack>
-                        </TableCell>
-                        <TableCell>
-                          <Stack direction="row" spacing={1} alignItems="center">
-                            <LocationOn color="primary" fontSize="small" />
-                            <Typography variant="body2">
-                              {visit.property?.location || 'Location not available'}
-                            </Typography>
-                          </Stack>
-                        </TableCell>
-                        <TableCell>
-                          <Stack direction="row" spacing={1} alignItems="center">
-                            <Event color="primary" fontSize="small" />
-                            <Typography variant="body2">
-                              {visit.visitDate ? new Date(visit.visitDate).toLocaleDateString() : 'No date'}
-                            </Typography>
-                            <AccessTime color="primary" fontSize="small" />
-                            <Typography variant="body2">
-                              {visit.visitTime || 'No time'}
-                            </Typography>
-                          </Stack>
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={getStatusText(visit.status)}
-                            color={getStatusColor(visit.status)}
-                            size="small"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Stack direction="row" spacing={1}>
-                            {(visit.status === 'pending' || visit.status === 'confirmed') && (
-                              <Button
-                                variant="outlined"
-                                color="primary"
-                                size="small"
-                                onClick={() => openReschedule(visit)}
-                              >
-                                Reschedule
-                              </Button>
-                            )}
-                            {(visit.status === 'pending' || visit.status === 'confirmed') && (
-                              <Button
-                                variant="outlined"
-                                color="error"
-                                size="small"
-                                onClick={() => {
-                                  setVisitToCancel(visit);
-                                  setOpenCancelDialog(true);
-                                }}
-                              >
-                                Cancel
-                              </Button>
-                            )}
-                            {(visit.status === 'cancelled' || visit.status === 'rejected') && (
-                              <Button
-                                variant="outlined"
-                                color="error"
-                                size="small"
-                                onClick={() => {
-                                  setVisitToRemove(visit);
-                                  setOpenRemoveDialog(true);
-                                }}
-                              >
-                                Remove
-                              </Button>
-                            )}
-                          </Stack>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                                  Remove
+                                </Button>
+                              )}
+                        </Stack>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+              </Paper>
             ) : (
-              <Paper sx={{ 
-                p: 3, 
-                borderRadius: 2, 
-                boxShadow: theme => theme.shadows[2],
-                width: '100%'
-              }}>
+              <Paper 
+                elevation={0}
+                sx={{ 
+                  p: 3, 
+                  borderRadius: 2,
+                  backgroundColor: 'white',
+                  width: '100%'
+                }}
+              >
                 <Timeline position="alternate">
                   {visits.map((visit) => (
                     <VisitTimelineItem key={visit._id} status={visit.status}>
@@ -955,223 +938,223 @@ const ScheduledVisits = ({ onSidebarToggle }) => {
               </Paper>
             )}
           </Box>
+        </Container>
 
-          {/* New Visit Dialog */}
-          <Dialog
-            open={openNewVisitDialog}
-            onClose={() => setOpenNewVisitDialog(false)}
-            maxWidth="sm"
-            fullWidth
-          >
-            <DialogTitle>Schedule New Visit</DialogTitle>
-            <DialogContent>
-              <Stack spacing={3} sx={{ mt: 2 }}>
-                <FormControl fullWidth>
-                  <InputLabel>Select Property</InputLabel>
-                  <Select
-                    value={selectedProperty}
-                    onChange={(e) => setSelectedProperty(e.target.value)}
-                    label="Select Property"
-                  >
-                    {properties.map((property) => (
-                      <MenuItem key={property._id} value={property._id}>
-                        {property.title} - {property.location}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                <LocalizationProvider dateAdapter={AdapterDateFns}>
-                  <DateTimePicker
-                    label="Select Date and Time"
-                    value={visitDate}
-                    onChange={(newValue) => setVisitDate(newValue)}
-                    minDate={new Date()}
-                    renderInput={(params) => <TextField {...params} fullWidth />}
-                  />
-                </LocalizationProvider>
-                <TextField
-                  fullWidth
-                  label="Message (Optional)"
-                  multiline
-                  rows={3}
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Add any additional notes or requests..."
+        {/* New Visit Dialog */}
+        <Dialog
+          open={openNewVisitDialog}
+          onClose={() => setOpenNewVisitDialog(false)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>Schedule New Visit</DialogTitle>
+          <DialogContent>
+            <Stack spacing={3} sx={{ mt: 2 }}>
+              <FormControl fullWidth>
+                <InputLabel>Select Property</InputLabel>
+                <Select
+                  value={selectedProperty}
+                  onChange={(e) => setSelectedProperty(e.target.value)}
+                  label="Select Property"
+                >
+                  {properties.map((property) => (
+                    <MenuItem key={property._id} value={property._id}>
+                      {property.title} - {property.location}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <LocalizationProvider dateAdapter={AdapterDateFns}>
+                <DateTimePicker
+                  label="Select Date and Time"
+                  value={visitDate}
+                  onChange={(newValue) => setVisitDate(newValue)}
+                  minDate={new Date()}
+                  renderInput={(params) => <TextField {...params} fullWidth />}
                 />
-              </Stack>
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={() => setOpenNewVisitDialog(false)}>Cancel</Button>
-              <Button
-                variant="contained"
-                onClick={handleScheduleVisit}
-                disabled={!selectedProperty || !visitDate}
-              >
-                Schedule Visit
-              </Button>
-            </DialogActions>
-          </Dialog>
+              </LocalizationProvider>
+              <TextField
+                fullWidth
+                label="Message (Optional)"
+                multiline
+                rows={3}
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="Add any additional notes or requests..."
+              />
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpenNewVisitDialog(false)}>Cancel</Button>
+            <Button
+              variant="contained"
+              onClick={handleScheduleVisit}
+              disabled={!selectedProperty || !visitDate}
+            >
+              Schedule Visit
+            </Button>
+          </DialogActions>
+        </Dialog>
 
-          {/* Reschedule Dialog */}
-          <Dialog
-            open={openRescheduleDialog}
-            onClose={() => {
-              setOpenRescheduleDialog(false);
-              setSelectedVisit(null);
-              setVisitDate(null);
-            }}
-            maxWidth="sm"
-            fullWidth
-          >
-            <DialogTitle>Reschedule Visit</DialogTitle>
-            <DialogContent>
-              <Stack spacing={3} sx={{ mt: 2 }}>
-                <Box>
-                  <Typography variant="subtitle1" gutterBottom>
-                    Property: {selectedVisit?.property?.title}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Current Date: {selectedVisit?.visitDate && new Date(selectedVisit.visitDate).toLocaleDateString()} {selectedVisit?.visitTime}
-                  </Typography>
-                </Box>
-                <LocalizationProvider dateAdapter={AdapterDateFns}>
-                  <DateTimePicker
-                    label="Select New Date and Time"
-                    value={visitDate}
-                    onChange={(newValue) => setVisitDate(newValue)}
-                    minDate={new Date()}
-                    renderInput={(params) => <TextField {...params} fullWidth />}
-                  />
-                </LocalizationProvider>
-              </Stack>
-            </DialogContent>
-            <DialogActions>
-              <Button 
-                onClick={() => {
-                  setOpenRescheduleDialog(false);
-                  setSelectedVisit(null);
-                  setVisitDate(null);
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="contained"
-                onClick={handleRescheduleVisit}
-                disabled={!visitDate}
-              >
-                Reschedule Visit
-              </Button>
-            </DialogActions>
-          </Dialog>
-
-          {/* Cancel Visit Dialog */}
-          <Dialog
-            open={openCancelDialog}
-            onClose={() => {
-              setOpenCancelDialog(false);
-              setVisitToCancel(null);
-              setCancelMessage('');
-            }}
-            maxWidth="sm"
-            fullWidth
-          >
-            <DialogTitle>Cancel Visit</DialogTitle>
-            <DialogContent>
-              <Stack spacing={3} sx={{ mt: 2 }}>
-                <Typography variant="body1">
-                  Are you sure you want to cancel this visit?
+        {/* Reschedule Dialog */}
+        <Dialog
+          open={openRescheduleDialog}
+          onClose={() => {
+            setOpenRescheduleDialog(false);
+            setSelectedVisit(null);
+            setVisitDate(null);
+          }}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>Reschedule Visit</DialogTitle>
+          <DialogContent>
+            <Stack spacing={3} sx={{ mt: 2 }}>
+              <Box>
+                <Typography variant="subtitle1" gutterBottom>
+                  Property: {selectedVisit?.property?.title}
                 </Typography>
-                <Box>
-                  <Typography variant="subtitle2" gutterBottom>
-                    Property: {visitToCancel?.property?.title}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Scheduled for: {visitToCancel?.visitDate && new Date(visitToCancel.visitDate).toLocaleDateString()} {visitToCancel?.visitTime}
-                  </Typography>
-                </Box>
-                <TextField
-                  fullWidth
-                  label="Cancellation Reason"
-                  multiline
-                  rows={3}
-                  value={cancelMessage}
-                  onChange={(e) => setCancelMessage(e.target.value)}
-                  placeholder="Please provide a reason for cancellation..."
-                  required
+                <Typography variant="body2" color="text.secondary">
+                  Current Date: {selectedVisit?.visitDate && new Date(selectedVisit.visitDate).toLocaleDateString()} {selectedVisit?.visitTime}
+                </Typography>
+              </Box>
+              <LocalizationProvider dateAdapter={AdapterDateFns}>
+                <DateTimePicker
+                  label="Select New Date and Time"
+                  value={visitDate}
+                  onChange={(newValue) => setVisitDate(newValue)}
+                  minDate={new Date()}
+                  renderInput={(params) => <TextField {...params} fullWidth />}
                 />
-              </Stack>
-            </DialogContent>
-            <DialogActions>
-              <Button 
-                onClick={() => {
-                  setOpenCancelDialog(false);
-                  setVisitToCancel(null);
-                  setCancelMessage('');
-                }}
-              >
-                Back
-              </Button>
-              <Button
-                variant="contained"
-                color="error"
-                onClick={handleCancelVisit}
-                disabled={!cancelMessage.trim()}
-              >
-                Cancel Visit
-              </Button>
-            </DialogActions>
-          </Dialog>
+              </LocalizationProvider>
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <Button 
+              onClick={() => {
+                setOpenRescheduleDialog(false);
+                setSelectedVisit(null);
+                setVisitDate(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleRescheduleVisit}
+              disabled={!visitDate}
+            >
+              Reschedule Visit
+            </Button>
+          </DialogActions>
+        </Dialog>
 
-          {/* Add Remove Dialog */}
-          <Dialog
-            open={openRemoveDialog}
-            onClose={() => {
-              setOpenRemoveDialog(false);
-              setVisitToRemove(null);
-            }}
-            maxWidth="sm"
-            fullWidth
-          >
-            <DialogTitle>Remove Visit from List</DialogTitle>
-            <DialogContent>
-              <Stack spacing={3} sx={{ mt: 2 }}>
-                <Typography variant="body1">
-                  Are you sure you want to remove this cancelled visit from your list?
+        {/* Cancel Visit Dialog */}
+        <Dialog
+          open={openCancelDialog}
+          onClose={() => {
+            setOpenCancelDialog(false);
+            setVisitToCancel(null);
+            setCancelMessage('');
+          }}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>Cancel Visit</DialogTitle>
+          <DialogContent>
+            <Stack spacing={3} sx={{ mt: 2 }}>
+              <Typography variant="body1">
+                Are you sure you want to cancel this visit?
+              </Typography>
+              <Box>
+                <Typography variant="subtitle2" gutterBottom>
+                  Property: {visitToCancel?.property?.title}
                 </Typography>
-                <Box>
-                  <Typography variant="subtitle2" gutterBottom>
-                    Property: {visitToRemove?.property?.title}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Scheduled for: {visitToRemove?.visitDate && new Date(visitToRemove.visitDate).toLocaleDateString()} {visitToRemove?.visitTime}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Status: Cancelled
-                  </Typography>
-                </Box>
-              </Stack>
-            </DialogContent>
-            <DialogActions>
-              <Button 
-                onClick={() => {
-                  setOpenRemoveDialog(false);
-                  setVisitToRemove(null);
-                }}
-              >
-                Back
-              </Button>
-              <Button
-                variant="contained"
-                color="error"
-                onClick={handleRemoveVisit}
-              >
-                Remove
-              </Button>
-            </DialogActions>
-          </Dialog>
-        </Box>
-      </Box>
+                <Typography variant="body2" color="text.secondary">
+                  Scheduled for: {visitToCancel?.visitDate && new Date(visitToCancel.visitDate).toLocaleDateString()} {visitToCancel?.visitTime}
+                </Typography>
+              </Box>
+              <TextField
+                fullWidth
+                label="Cancellation Reason"
+                multiline
+                rows={3}
+                value={cancelMessage}
+                onChange={(e) => setCancelMessage(e.target.value)}
+                placeholder="Please provide a reason for cancellation..."
+                required
+              />
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <Button 
+              onClick={() => {
+                setOpenCancelDialog(false);
+                setVisitToCancel(null);
+                setCancelMessage('');
+              }}
+            >
+              Back
+            </Button>
+            <Button
+              variant="contained"
+              color="error"
+              onClick={handleCancelVisit}
+              disabled={!cancelMessage.trim()}
+            >
+              Cancel Visit
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Add Remove Dialog */}
+        <Dialog
+          open={openRemoveDialog}
+          onClose={() => {
+            setOpenRemoveDialog(false);
+            setVisitToRemove(null);
+          }}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>Remove Visit from List</DialogTitle>
+          <DialogContent>
+            <Stack spacing={3} sx={{ mt: 2 }}>
+              <Typography variant="body1">
+                Are you sure you want to remove this cancelled visit from your list?
+              </Typography>
+              <Box>
+                <Typography variant="subtitle2" gutterBottom>
+                  Property: {visitToRemove?.property?.title}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Scheduled for: {visitToRemove?.visitDate && new Date(visitToRemove.visitDate).toLocaleDateString()} {visitToRemove?.visitTime}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Status: Cancelled
+                </Typography>
+              </Box>
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <Button 
+              onClick={() => {
+                setOpenRemoveDialog(false);
+                setVisitToRemove(null);
+              }}
+            >
+              Back
+            </Button>
+            <Button
+              variant="contained"
+              color="error"
+              onClick={handleRemoveVisit}
+            >
+              Remove
+            </Button>
+          </DialogActions>
+        </Dialog>
+    </Box>
     </ThemeProvider>
   );
 };

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { AppBar, Toolbar, Typography, Button, IconButton, Menu, MenuItem, Avatar, Tooltip, Badge, InputBase, Box } from "@mui/material";
+import { AppBar, Toolbar, Typography, Button, IconButton, Menu, MenuItem, Avatar, Tooltip, Badge, InputBase, Box, Divider } from "@mui/material";
 import { styled, alpha } from "@mui/material/styles";
 import MenuIcon from "@mui/icons-material/Menu";
 import HomeIcon from "@mui/icons-material/Home";
@@ -7,6 +7,7 @@ import BusinessIcon from "@mui/icons-material/Business";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import SearchIcon from "@mui/icons-material/Search";
+import LogoutIcon from "@mui/icons-material/Logout";
 import { useNavigate, Link } from "react-router-dom";
 
 const Search = styled("div")(({ theme }) => ({
@@ -57,73 +58,94 @@ const TenantNavbar = ({ toggleDrawer }) => {
     toggleDrawer(true);
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    navigate("/login");
+  };
+
   return (
-    <AppBar position="fixed" sx={{ zIndex: 1201, background: "linear-gradient(to right, #0072ff, #00c6ff)" }}>
-      <Toolbar>
-        <IconButton edge="start" color="inherit" onClick={handleDraweToggle}>
-          <MenuIcon />
-        </IconButton>
-        <Typography variant="h6" sx={{ flexGrow: 1, cursor: "pointer" }} onClick={() => navigate("/home")}>
-          RentEase
-        </Typography>
+    <AppBar 
+      position="fixed" 
+      sx={{ 
+        zIndex: 1201, 
+        background: "linear-gradient(to right, #0072ff, #00c6ff)",
+        width: "100%",
+        left: 0
+      }}
+    >
+      <Toolbar sx={{ justifyContent: 'space-between', width: '100%', px: { xs: 2, sm: 3 } }}>
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <IconButton 
+            edge="start" 
+            color="inherit" 
+            onClick={handleDraweToggle}
+            sx={{ mr: 2 }}
+          >
+            <MenuIcon />
+          </IconButton>
+          <Typography 
+            variant="h6" 
+            sx={{ 
+              cursor: "pointer", 
+              display: { xs: 'none', sm: 'block' } 
+            }} 
+            onClick={() => navigate("/home")}
+          >
+            RentEase
+          </Typography>
+        </Box>
+
         <Search>
           <SearchIconWrapper>
             <SearchIcon />
           </SearchIconWrapper>
           <StyledInputBase placeholder="Search..." inputProps={{ "aria-label": "search" }} />
         </Search>
-        <IconButton color="inherit" sx={{ mr: 2 }}>
-          <Badge badgeContent={notifications} color="error">
-            <NotificationsIcon />
-          </Badge>
-        </IconButton>
-        <Box sx={{ display: { xs: 'none', sm: 'flex' }, gap: 2, mr: 2 }}>
-          <Button
-            color="inherit"
-            component={Link}
-            to="/home"
-            sx={{
-              textTransform: 'none',
-              color: '#ffffff',
-              '&:hover': {
-                backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                color: '#ffffff'
-              }
-            }}
-          >
-            Home
-          </Button>
-          <Button
-            color="inherit"
-            component={Link}
-            to="/properties"
-            sx={{
-              textTransform: 'none',
-              color: '#ffffff',
-              '&:hover': {
-                backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                color: '#ffffff'
-              }
-            }}
-          >
-            Properties
-          </Button>
-        </Box>
-        <Tooltip title="Account Settings">
-          <IconButton onClick={handleMenuOpen} color="inherit">
-            <Avatar sx={{ bgcolor: "#fff", color: "#0072ff" }}>
-              <AccountCircleIcon />
-            </Avatar>
+
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <IconButton color="inherit">
+            <Badge badgeContent={notifications} color="error">
+              <NotificationsIcon />
+            </Badge>
           </IconButton>
-        </Tooltip>
+          <Tooltip title="Account Settings">
+            <IconButton onClick={handleMenuOpen} color="inherit">
+              <Avatar sx={{ bgcolor: "#fff", color: "#0072ff", width: 32, height: 32 }}>
+                T
+              </Avatar>
+            </IconButton>
+          </Tooltip>
+        </Box>
+
         <Menu
           anchorEl={anchorEl}
           open={Boolean(anchorEl)}
           onClose={handleMenuClose}
-          sx={{ mt: 5 }}
+          onClick={handleMenuClose}
+          PaperProps={{
+            sx: {
+              mt: 1.5,
+              minWidth: 200,
+              borderRadius: 2,
+              boxShadow: 3
+            },
+          }}
+          transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+          anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
         >
-          <MenuItem onClick={() => { navigate("/tenant/profile"); handleMenuClose(); }}>Profile</MenuItem>
-          <MenuItem onClick={() => { localStorage.removeItem("user"); navigate("/login"); handleMenuClose(); }}>Logout</MenuItem>
+          <MenuItem onClick={() => navigate("/profile")}>
+            <AccountCircleIcon sx={{ mr: 2 }} /> Profile
+          </MenuItem>
+          <MenuItem onClick={() => navigate("/dashboard")}>
+            <HomeIcon sx={{ mr: 2 }} /> Dashboard
+          </MenuItem>
+          <MenuItem onClick={() => navigate("/properties")}>
+            <BusinessIcon sx={{ mr: 2 }} /> Properties
+          </MenuItem>
+          <Divider />
+          <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
+            <LogoutIcon sx={{ mr: 2 }} /> Logout
+          </MenuItem>
         </Menu>
       </Toolbar>
     </AppBar>
