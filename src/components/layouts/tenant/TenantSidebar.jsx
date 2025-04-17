@@ -114,9 +114,9 @@ const TenantSidebar = ({ drawerOpen, toggleDrawer }) => {
           <List component="div" disablePadding>
             <ListItemButton 
               sx={{ pl: 4 }}
-              selected={location.pathname === "/my-bookings"}
+              selected={location.pathname === "/tenant/booking"}
               onClick={() => {
-                navigate("/my-bookings");
+                navigate("/tenant/booking");
                 handleDrawerClose();
               }}
             >

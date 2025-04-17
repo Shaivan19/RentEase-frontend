@@ -33,6 +33,7 @@ import TenantLayout from './components/layouts/tenant/TenantLayout'
 import { isLoggedIn, getUserType } from './utils/auth'
 import SavedProperties from './components/layouts/tenant/components/SavedProperties'
 import ScheduledVisits from './components/layouts/tenant/components/ScheduledVisits'
+import MyBookings from './components/layouts/tenant/components/MyBookings'
 // import ResetPassword from './components/common/ResetPassword'
 
 // Protected route component
@@ -87,6 +88,7 @@ function App() {
               <Route path='profile' element={<UserProfile/>}></Route>
               <Route path='savedproperties' element={<SavedProperties/>}></Route>
               <Route path='visits' element={<ScheduledVisits/>}></Route>
+              <Route path='booking' element={<MyBookings/>}></Route>
             
             </Route>
             

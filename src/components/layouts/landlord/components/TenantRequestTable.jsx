@@ -37,7 +37,7 @@ const TenantRequestTable = ({ requests, onUpdate }) => {
         return;
       }
 
-      const response = await axios.put(`/visit/confirm/${visitId}`, {}, {
+      const response = await axios.put(`/visit-properties/confirm/${visitId}`, {}, {
         headers: {
           Authorization: `Bearer ${userData.token}`
         }

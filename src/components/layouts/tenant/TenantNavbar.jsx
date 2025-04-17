@@ -133,8 +133,11 @@ const TenantNavbar = ({ toggleDrawer }) => {
           transformOrigin={{ horizontal: 'right', vertical: 'top' }}
           anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
         >
-          <MenuItem onClick={() => navigate("/profile")}>
+          <MenuItem onClick={() => navigate("/tenant/profile")}>
             <AccountCircleIcon sx={{ mr: 2 }} /> Profile
+          </MenuItem>
+          <MenuItem onClick={() => navigate("/home")}>
+            <AccountCircleIcon sx={{ mr: 2 }} /> Home
           </MenuItem>
           <MenuItem onClick={() => navigate("/dashboard")}>
             <HomeIcon sx={{ mr: 2 }} /> Dashboard
