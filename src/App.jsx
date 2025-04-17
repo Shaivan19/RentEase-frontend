@@ -35,6 +35,15 @@ import SavedProperties from './components/layouts/tenant/components/SavedPropert
 import ScheduledVisits from './components/layouts/tenant/components/ScheduledVisits'
 import MyBookings from './components/layouts/tenant/components/MyBookings'
 import { AdminSidebar } from './components/layouts/admin/AdminSidebar'
+import { AdminLogin } from './components/layouts/admin/pages/AdminLogin'
+import { AdminDashboard } from './components/layouts/admin/AdminDashboard'
+import { AdminRoute } from './components/layouts/admin/AdminRoute'
+import AdminUsers from './components/layouts/admin/pages/AdminUsers'
+import AdminProperties from './components/layouts/admin/pages/AdminProperties'
+import AdminBookings from './components/layouts/admin/pages/AdminBookings'
+import AdminProfile from './components/layouts/admin/pages/AdminProfile'
+import AdminReports from './components/layouts/admin/pages/AdminReports'
+
 // import ResetPassword from './components/common/ResetPassword'
 
 // Protected route component
@@ -76,6 +85,19 @@ function App() {
             <Route path='/contactus' element={<ContactUs/>}></Route>
             {/* <Route path='/reset-password' element={<ResetPassword/>}></Route> */}
             
+            {/* Admin routes */}
+            <Route path="/admin/login" element={<AdminLogin/>} />
+            <Route path="/admin" element={<AdminRoute />}>
+              <Route element={<AdminSidebar />}>
+                <Route path="dashboard" element={<AdminDashboard />} />
+                <Route path="users" element={<AdminUsers/>} />
+                <Route path="properties" element={<AdminProperties />} />
+                <Route path="bookings" element={<AdminBookings />} />
+                <Route path="profile" element={<AdminProfile />} />
+                <Route path="reports" element={<AdminReports />} />
+              </Route>
+            </Route>
+            
             {/* Tenant protected routes */}
             <Route 
               path='/tenant' 
@@ -98,7 +120,7 @@ function App() {
             <Route 
               path="/landlord" 
               element={
-                <ProtectedRoute role="landlord" allowedRoles={["landlord"]}>
+                <ProtectedRoute allowedUserTypes={["landlord"]}>
                   <LandlordLayout />
                 </ProtectedRoute>
               }
@@ -131,8 +153,10 @@ function App() {
             {/* Property Details route */}
             <Route path='/property/:id' element={<PropertyDetails/>}></Route>
             
-            {/* Catch-all route */}
-            <Route path="*" element={<Navigate to="/" replace />} />
+            {/* Debug route - only in development */}
+            {isDevelopment && (
+              <Route path="/auth-debug" element={<AuthDebugger/>}></Route>
+            )}
           </Routes>
           
           {/* Include the auth debugger in development environment only */}

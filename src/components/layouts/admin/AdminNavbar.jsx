@@ -1,6 +1,15 @@
 import React from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { logoutAdmin } from '../../../utils/adminAuth'
 
 export const AdminNavbar = () => {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logoutAdmin();
+    navigate('/admin/login');
+  };
+
   return (
     <nav className="app-header navbar navbar-expand bg-body">
       {/* {/begin::Container/} */}
@@ -18,9 +27,9 @@ export const AdminNavbar = () => {
             </a>
           </li>
           <li className="nav-item d-none d-md-block">
-            <a href="#" className="nav-link">
-              Home
-            </a>
+            <Link to="/admin/dashboard" className="nav-link">
+              Dashboard
+            </Link>
           </li>
           <li className="nav-item d-none d-md-block">
             <a href="#" className="nav-link">
@@ -143,31 +152,23 @@ export const AdminNavbar = () => {
           <li className="nav-item dropdown">
             <a className="nav-link" data-bs-toggle="dropdown" href="#">
               <i className="bi bi-bell-fill" />
-              <span className="navbar-badge badge text-bg-warning">15</span>
+              <span className="navbar-badge badge text-bg-warning">0</span>
             </a>
             <div className="dropdown-menu dropdown-menu-lg dropdown-menu-end">
               <span className="dropdown-item dropdown-header">
-                15 Notifications
+                Notifications
               </span>
               <div className="dropdown-divider" />
               <a href="#" className="dropdown-item">
-                <i className="bi bi-envelope me-2" /> 4 new messages
-                <span className="float-end text-secondary fs-7">3 mins</span>
+                <i className="bi bi-envelope me-2" /> No new messages
               </a>
               <div className="dropdown-divider" />
               <a href="#" className="dropdown-item">
-                <i className="bi bi-people-fill me-2" /> 8 friend requests
-                <span className="float-end text-secondary fs-7">12 hours</span>
+                <i className="bi bi-people-fill me-2" /> No new users
               </a>
               <div className="dropdown-divider" />
               <a href="#" className="dropdown-item">
-                <i className="bi bi-file-earmark-fill me-2" /> 3 new reports
-                <span className="float-end text-secondary fs-7">2 days</span>
-              </a>
-              <div className="dropdown-divider" />
-              <a href="#" className="dropdown-item dropdown-footer">
-                {" "}
-                See All Notifications{" "}
+                <i className="bi bi-file-earmark-fill me-2" /> No new reports
               </a>
             </div>
           </li>
@@ -192,23 +193,23 @@ export const AdminNavbar = () => {
               data-bs-toggle="dropdown"
             >
               <img
-                src="../../dist/assets/img/user2-160x160.jpg"
+                src="/admin-avatar.png"
                 className="user-image rounded-circle shadow"
-                alt="User Image"
+                alt="Admin Image"
               />
-              <span className="d-none d-md-inline">Alexander Pierce</span>
+              <span className="d-none d-md-inline">Admin</span>
             </a>
             <ul className="dropdown-menu dropdown-menu-lg dropdown-menu-end">
               {/* {/begin::User Image/} */}
               <li className="user-header text-bg-primary">
                 <img
-                  src="../../dist/assets/img/user2-160x160.jpg"
+                  src="/admin-avatar.png"
                   className="rounded-circle shadow"
-                  alt="User Image"
+                  alt="Admin Image"
                 />
                 <p>
-                  Alexander Pierce - Web Developer
-                  <small>Member since Nov. 2023</small>
+                  Admin
+                  <small>Administrator</small>
                 </p>
               </li>
               {/* {/end::User Image/} */}
@@ -231,12 +232,15 @@ export const AdminNavbar = () => {
               {/* {/end::Menu Body/} */}
               {/* {/begin::Menu Footer/} */}
               <li className="user-footer">
-                <a href="#" className="btn btn-default btn-flat">
+                <Link to="/admin/profile" className="btn btn-default btn-flat">
                   Profile
-                </a>
-                <a href="#" className="btn btn-default btn-flat float-end">
+                </Link>
+                <button 
+                  onClick={handleLogout}
+                  className="btn btn-default btn-flat float-end"
+                >
                   Sign out
-                </a>
+                </button>
               </li>
               {/* {/end::Menu Footer/} */}
             </ul>

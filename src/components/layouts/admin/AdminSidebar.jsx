@@ -1,11 +1,11 @@
 import React from 'react'
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { AdminNavbar } from './AdminNavbar'
-import { getUserId } from '../../../utils/auth'
+import { getAdminId } from '../../../utils/adminAuth'
 
 export const AdminSidebar = () => {
   const location = useLocation();
-  const userId = getUserId();
+  const adminId = getAdminId();
 
   const isActive = (path) => {
     return location.pathname === path;
@@ -19,8 +19,8 @@ export const AdminSidebar = () => {
         data-bs-theme="dark"
       >
         <div className="sidebar-brand">
-          <Link to="/user/profile" className="brand-link">
-            <span className="brand-text fw-light">User Dashboard</span>
+          <Link to="/admin/dashboard" className="brand-link">
+            <span className="brand-text fw-light">Admin Dashboard</span>
           </Link>
         </div>
 
@@ -48,38 +48,56 @@ export const AdminSidebar = () => {
             >
               <li className="nav-item">
                 <Link 
-                  to="/user/profile" 
-                  className={`nav-link ${isActive('/user/profile') ? 'active' : ''}`}
+                  to="/admin/dashboard" 
+                  className={`nav-link ${isActive('/admin/dashboard') ? 'active' : ''}`}
                 >
-                  <i className="nav-icon bi bi-person" />
-                  <p>Profile</p>
+                  <i className="nav-icon bi bi-speedometer2" />
+                  <p>Dashboard</p>
                 </Link>
               </li>
               <li className="nav-item">
                 <Link 
-                  to="/user/settings" 
-                  className={`nav-link ${isActive('/user/settings') ? 'active' : ''}`}
+                  to="/admin/users" 
+                  className={`nav-link ${isActive('/admin/users') ? 'active' : ''}`}
+                >
+                  <i className="nav-icon bi bi-people" />
+                  <p>Users</p>
+                </Link>
+              </li>
+              <li className="nav-item">
+                <Link 
+                  to="/admin/properties" 
+                  className={`nav-link ${isActive('/admin/properties') ? 'active' : ''}`}
+                >
+                  <i className="nav-icon bi bi-house" />
+                  <p>Properties</p>
+                </Link>
+              </li>
+              <li className="nav-item">
+                <Link 
+                  to="/admin/bookings" 
+                  className={`nav-link ${isActive('/admin/bookings') ? 'active' : ''}`}
+                >
+                  <i className="nav-icon bi bi-calendar-check" />
+                  <p>Bookings</p>
+                </Link>
+              </li>
+              <li className="nav-item">
+                <Link 
+                  to="/admin/reports" 
+                  className={`nav-link ${isActive('/admin/reports') ? 'active' : ''}`}
+                >
+                  <i className="nav-icon bi bi-file-earmark-text" />
+                  <p>Reports</p>
+                </Link>
+              </li>
+              <li className="nav-item">
+                <Link 
+                  to="/admin/settings" 
+                  className={`nav-link ${isActive('/admin/settings') ? 'active' : ''}`}
                 >
                   <i className="nav-icon bi bi-gear" />
                   <p>Settings</p>
-                </Link>
-              </li>
-              <li className="nav-item">
-                <Link 
-                  to="/user/notifications" 
-                  className={`nav-link ${isActive('/user/notifications') ? 'active' : ''}`}
-                >
-                  <i className="nav-icon bi bi-bell" />
-                  <p>Notifications</p>
-                </Link>
-              </li>
-              <li className="nav-item">
-                <Link 
-                  to="/user/security" 
-                  className={`nav-link ${isActive('/user/security') ? 'active' : ''}`}
-                >
-                  <i className="nav-icon bi bi-shield-lock" />
-                  <p>Security</p>
                 </Link>
               </li>
             </ul>
