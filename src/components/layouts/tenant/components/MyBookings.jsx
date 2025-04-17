@@ -56,7 +56,7 @@ const MyBookings = () => {
     const fetchBookings = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('/bookings/my-bookings');
+        const response = await axios.get('/allbookings');
         setBookings(response.data);
         setError(null);
       } catch (err) {
@@ -193,7 +193,7 @@ const MyBookings = () => {
                       <Button
                         variant="outlined"
                         size="small"
-                        onClick={() => navigate(`/booking/${booking._id}`)}
+                        onClick={() => navigate(`/book/${booking._id}`)}
                       >
                         Details
                       </Button>
