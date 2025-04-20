@@ -531,8 +531,11 @@ const PropertyDetails = () => {
             throw new Error('Please generate a lease first');
         }
 
+        // Calculate total amount (rent + security deposit)
+        const totalAmount = (property.price + property.price) * 100; // Convert to paise
+
         const requestData = {
-            amount: 10000, // 100 INR in paise
+            amount: totalAmount,
             paymentType: 'rent',
             tenantId: userData.userId,
             landlordId: property.owner._id,
@@ -540,8 +543,8 @@ const PropertyDetails = () => {
             description: `Initial payment for property at ${property.address.street}`,
             leaseId: leaseDraft._id,
             leaseTerms: {
-                rentAmount: leaseDraft.propertyDetails.rentAmount,
-                securityDeposit: leaseDraft.propertyDetails.securityDeposit,
+                rentAmount: property.price,
+                securityDeposit: property.price,
                 startDate: leaseDraft.leaseTerms.startDate,
                 endDate: leaseDraft.leaseTerms.endDate,
                 duration: leaseDraft.leaseTerms.duration,
@@ -553,10 +556,6 @@ const PropertyDetails = () => {
                 terminationClause: 'Standard termination terms apply'
             }
         };
-
-        console.log('Request data:', JSON.stringify(requestData, null, 2));
-        console.log('Lease draft:', JSON.stringify(leaseDraft, null, 2));
-        console.log('Property:', JSON.stringify(property, null, 2));
 
         // Create payment order
         const orderResponse = await axios.post('/payments/create-order', requestData, {
@@ -591,15 +590,13 @@ const PropertyDetails = () => {
             throw new Error('Razorpay key not found');
         }
 
-        console.log('Initializing Razorpay with order:', orderResponse.data.order);
-
         // Initialize Razorpay
         const options = {
             key: razorpayKey,
             amount: orderResponse.data.order.amount,
             currency: "INR",
             name: "RentEase",
-            description: "Property Rental Payment",
+            description: `Property Rental Payment - ${property.title}`,
             order_id: orderResponse.data.order.id,
             handler: async function (response) {
                 try {
@@ -611,7 +608,9 @@ const PropertyDetails = () => {
                             razorpay_order_id: response.razorpay_order_id,
                             razorpay_payment_id: response.razorpay_payment_id,
                             razorpay_signature: response.razorpay_signature,
-                            leaseId: leaseDraft._id
+                            leaseId: leaseDraft._id,
+                            propertyId: property._id,
+                            status: 'completed'
                         },
                         {
                             headers: {
@@ -622,9 +621,40 @@ const PropertyDetails = () => {
                     );
 
                     if (verifyResponse.data.success) {
-                        toast.success('Payment successful!');
-                        // Refresh property details
-                        fetchPropertyDetails();
+                        // Update property status to "Booked"
+                        const updateStatusResponse = await axios.put(
+                            `/properties/${property._id}/status`,
+                            { status: 'Booked' },
+                            {
+                                headers: {
+                                    Authorization: `Bearer ${userData.token}`,
+                                    'Content-Type': 'application/json'
+                                }
+                            }
+                        );
+                        
+                        if (updateStatusResponse.data.success) {
+                            // Update local property state
+                            setProperty(prev => ({ ...prev, status: 'Booked' }));
+                            
+                            // Dispatch event to notify other components
+                            window.dispatchEvent(new CustomEvent('propertyStatusUpdated', {
+                                detail: {
+                                    propertyId: property._id,
+                                    status: 'Booked',
+                                    earnings: property.price
+                                }
+                            }));
+                            
+                            toast.success('Payment successful! Property has been booked.');
+                            // Close the rent dialog
+                            setRentDialogOpen(false);
+                            
+                            // Navigate to MyBookings page
+                            navigate('/tenant/my-bookings', { replace: true });
+                        } else {
+                            toast.error('Property status update failed');
+                        }
                     } else {
                         toast.error('Payment verification failed');
                     }
@@ -643,7 +673,6 @@ const PropertyDetails = () => {
             }
         };
 
-        console.log('Creating Razorpay instance with options:', options);
         const razorpayInstance = new window.Razorpay(options);
         razorpayInstance.open();
     } catch (error) {

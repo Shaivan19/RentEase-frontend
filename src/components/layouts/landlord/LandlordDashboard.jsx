@@ -47,6 +47,7 @@ const LandlordDashboard = () => {
     properties: [],
     upcomingVisits: [],
     recentBookings: [],
+    monthlyEarnings: [],
     stats: {
       totalProperties: 0,
       occupiedProperties: 0,
@@ -64,6 +65,22 @@ const LandlordDashboard = () => {
     }
   }, []);
 
+  // Add event listener for property status updates
+  useEffect(() => {
+    const handlePropertyStatusUpdate = (event) => {
+      console.log('Property status updated event received:', event.detail);
+      // Refresh dashboard data when a property status is updated
+      fetchDashboardData();
+    };
+
+    window.addEventListener('propertyStatusUpdated', handlePropertyStatusUpdate);
+    
+    // Clean up event listener on component unmount
+    return () => {
+      window.removeEventListener('propertyStatusUpdated', handlePropertyStatusUpdate);
+    };
+  }, []);
+
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
@@ -73,18 +90,27 @@ const LandlordDashboard = () => {
         return;
       }
 
-      const response = await axios.get('/landlord/dashboard', {
-        headers: {
-          Authorization: `Bearer ${userData.token}`
-        }
-      });
+      const [dashboardResponse, earningsResponse] = await Promise.all([
+        axios.get('/landlord/dashboard', {
+          headers: {
+            Authorization: `Bearer ${userData.token}`
+          }
+        }),
+        axios.get('/payments/landlord-earnings', {
+          headers: {
+            Authorization: `Bearer ${userData.token}`
+          }
+        })
+      ]);
 
-      if (response.data.success) {
-        const dashboardData = response.data.data;
-        setDashboardData(dashboardData);
+      if (dashboardResponse.data.success && earningsResponse.data.success) {
+        setDashboardData({
+          ...dashboardResponse.data.data,
+          monthlyEarnings: earningsResponse.data.monthlyEarnings
+        });
         
         // Transform visits into notifications
-        const visitNotifications = dashboardData.upcomingVisits.map(visit => ({
+        const visitNotifications = dashboardResponse.data.data.upcomingVisits.map(visit => ({
           id: visit.id,
           type: 'visit',
           title: 'Property Visit',
@@ -138,6 +164,20 @@ const LandlordDashboard = () => {
   const handleRefresh = () => {
     setLastUpdated(new Date());
     fetchDashboardData();
+  };
+
+  // Calculate earnings trend
+  const calculateEarningsTrend = () => {
+    if (!dashboardData.monthlyEarnings || dashboardData.monthlyEarnings.length < 2) return "No data";
+    
+    const currentMonth = new Date().getMonth();
+    const currentEarnings = dashboardData.monthlyEarnings[currentMonth]?.earnings || 0;
+    const lastMonthEarnings = dashboardData.monthlyEarnings[currentMonth - 1]?.earnings || 0;
+    
+    if (lastMonthEarnings === 0) return "New earnings";
+    
+    const trend = ((currentEarnings - lastMonthEarnings) / lastMonthEarnings) * 100;
+    return `${trend > 0 ? '+' : ''}${trend.toFixed(1)}%`;
   };
 
   if (loading) {
@@ -286,7 +326,7 @@ const LandlordDashboard = () => {
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <TrendingUp color="success" />
                 <Typography variant="body2" color="success.main">
-                  {dashboardData.earningsTrend} from last month
+                  {calculateEarningsTrend()} from last month
                 </Typography>
               </Box>
             </Box>

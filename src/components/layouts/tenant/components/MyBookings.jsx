@@ -37,6 +37,7 @@ import {
 } from '@mui/icons-material';
 import { styled } from '@mui/system';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 const DEFAULT_PROPERTY_IMAGE = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2VlZSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjAiIGZpbGw9IiNhYWEiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5ObyBJbWFnZTwvdGV4dD48L3N2Zz4=';
 
@@ -86,21 +87,34 @@ const MyBookings = () => {
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [leaseDialogOpen, setLeaseDialogOpen] = useState(false);
 
-  useEffect(() => {
-    const fetchBookings = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get('/allbookings');
-        setBookings(response.data.bookings);
-        setError(null);
-      } catch (err) {
-        console.error('Error fetching bookings:', err);
-        setError('Failed to load bookings. Please try again later.');
-      } finally {
-        setLoading(false);
+  const fetchBookings = async () => {
+    try {
+      const userData = JSON.parse(localStorage.getItem('user'));
+      if (!userData || !userData.token) {
+        throw new Error('User not logged in');
       }
-    };
 
+      const response = await axios.get('/bookings/tenant', {
+        headers: {
+          Authorization: `Bearer ${userData.token}`
+        }
+      });
+
+      if (response.data.success) {
+        setBookings(response.data.bookings);
+      } else {
+        throw new Error(response.data.message || 'Failed to fetch bookings');
+      }
+    } catch (error) {
+      console.error('Error fetching bookings:', error);
+      setError(error.message);
+      toast.error('Failed to fetch bookings');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchBookings();
   }, []);
 
@@ -122,9 +136,17 @@ const MyBookings = () => {
     setLeaseDialogOpen(true);
   };
 
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-IN', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
         <CircularProgress />
       </Box>
     );
@@ -201,7 +223,7 @@ const MyBookings = () => {
                       <Stack direction="row" spacing={1} alignItems="center">
                         <Event color="primary" fontSize="small" />
                         <Typography variant="body2">
-                          {new Date(booking.startDate).toLocaleDateString()}
+                          {formatDate(booking.leaseTerms.startDate)}
                         </Typography>
                       </Stack>
                     </TableCell>
@@ -209,7 +231,7 @@ const MyBookings = () => {
                       <Stack direction="row" spacing={1} alignItems="center">
                         <Event color="primary" fontSize="small" />
                         <Typography variant="body2">
-                          {new Date(booking.endDate).toLocaleDateString()}
+                          {formatDate(booking.leaseTerms.endDate)}
                         </Typography>
                       </Stack>
                     </TableCell>
@@ -217,7 +239,7 @@ const MyBookings = () => {
                       <Stack direction="row" spacing={1} alignItems="center">
                         <Payment color="primary" fontSize="small" />
                         <Typography variant="body2">
-                          ₹{(booking.totalAmount || 0).toLocaleString('en-IN')}
+                          ₹{(booking.leaseTerms.rentAmount || 0).toLocaleString('en-IN')}
                         </Typography>
                       </Stack>
                     </TableCell>

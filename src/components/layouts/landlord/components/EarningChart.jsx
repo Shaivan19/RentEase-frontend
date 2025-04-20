@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   LineChart,
   Line,
@@ -57,16 +57,63 @@ const CustomTooltip = ({ active, payload, label }) => {
   return null;
 };
 
-const EarningsChart = ({ data }) => {
+const EarningsChart = ({ data: initialData }) => {
   const theme = useTheme();
+  const [chartData, setChartData] = useState(initialData);
 
   // Format the currency for Y-axis ticks
   const formatYAxis = (value) => formatToRupees(value);
 
+  // Add event listener for property status updates to refresh chart data
+  useEffect(() => {
+    const handlePropertyStatusUpdate = (event) => {
+      console.log('Property status updated event received in EarningsChart:', event.detail);
+      if (event.detail && event.detail.earnings) {
+        // Update the chart data with new earnings
+        const currentDate = new Date();
+        const currentMonth = currentDate.toLocaleString('default', { month: 'short' });
+        
+        setChartData(prevData => {
+          const newData = [...prevData];
+          const currentMonthIndex = newData.findIndex(item => item.month === currentMonth);
+          
+          if (currentMonthIndex !== -1) {
+            // Update existing month's earnings
+            newData[currentMonthIndex] = {
+              ...newData[currentMonthIndex],
+              earnings: newData[currentMonthIndex].earnings + event.detail.earnings
+            };
+          } else {
+            // Add new month's data
+            newData.push({
+              month: currentMonth,
+              earnings: event.detail.earnings,
+              target: newData[0]?.target || 0 // Use the same target as other months
+            });
+          }
+          
+          return newData;
+        });
+      }
+    };
+
+    window.addEventListener('propertyStatusUpdated', handlePropertyStatusUpdate);
+    
+    // Clean up event listener on component unmount
+    return () => {
+      window.removeEventListener('propertyStatusUpdated', handlePropertyStatusUpdate);
+    };
+  }, []);
+
+  // Update chart data when initialData changes
+  useEffect(() => {
+    setChartData(initialData);
+  }, [initialData]);
+
   return (
     <Box sx={{ width: "100%", height: 300 }}>
       <ResponsiveContainer>
-        <AreaChart data={data}>
+        <AreaChart data={chartData}>
           <defs>
             <linearGradient id="colorEarnings" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor={theme.palette.primary.main} stopOpacity={0.1} />

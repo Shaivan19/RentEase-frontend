@@ -127,6 +127,22 @@ const PropertyListingPage = () => {
     }
   }, [searchParams]);
 
+  // Add event listener for property status updates
+  useEffect(() => {
+    const handlePropertyStatusUpdate = (event) => {
+      console.log('Property status updated event received in PropertyList:', event.detail);
+      // Refresh properties when a property status is updated
+      fetchProperties();
+    };
+
+    window.addEventListener('propertyStatusUpdated', handlePropertyStatusUpdate);
+    
+    // Clean up event listener on component unmount
+    return () => {
+      window.removeEventListener('propertyStatusUpdated', handlePropertyStatusUpdate);
+    };
+  }, []);
+
   const toggleFavorite = (id) => {
     if (favorites.includes(id)) {
       setFavorites(favorites.filter(favId => favId !== id));
