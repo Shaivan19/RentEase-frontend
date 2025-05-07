@@ -43,6 +43,8 @@ import AdminProperties from './components/layouts/admin/pages/AdminProperties'
 import AdminBookings from './components/layouts/admin/pages/AdminBookings'
 import AdminProfile from './components/layouts/admin/pages/AdminProfile'
 import AdminReports from './components/layouts/admin/pages/AdminReports'
+import MaintenanceRequest from './components/common/MaintenanceRequest'
+import LandlordMaintenanceRequest from './components/layouts/landlord/components/MaintenanceRequestTable'
 
 // import ResetPassword from './components/common/ResetPassword'
 
@@ -112,6 +114,7 @@ function App() {
               <Route path='savedproperties' element={<SavedProperties/>}></Route>
               <Route path='visits' element={<ScheduledVisits/>}></Route>
               <Route path='booking' element={<MyBookings/>}></Route>
+              <Route path='maintenancerequest' element={<MaintenanceRequest/>}></Route>
             
             </Route>
             
@@ -129,6 +132,7 @@ function App() {
               <Route path='properties' element={<LandlordProperties/>}></Route>
               <Route path='addnewproperty' element={<AddProperty/>}></Route>
               <Route path='edit-property/:id' element={<AddProperty/>}></Route>
+              <Route path='maintenance' element={<LandlordMaintenanceRequest/>}></Route>
 
               
               <Route path='profile' element={<UserProfile/>}></Route>

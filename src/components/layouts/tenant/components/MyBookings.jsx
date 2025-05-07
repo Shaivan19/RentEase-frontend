@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { toast } from 'react-toastify';
 import {
   Box,
   Container,
@@ -26,6 +28,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  IconButton,
+  Collapse,
 } from '@mui/material';
 import {
   LocationOn,
@@ -34,10 +38,14 @@ import {
   CheckCircle,
   Pending,
   Cancel,
+  ExpandMore,
+  ExpandLess,
+  Home,
+  Bed,
+  Bathtub,
+  SquareFoot,
 } from '@mui/icons-material';
 import { styled } from '@mui/system';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
 
 const DEFAULT_PROPERTY_IMAGE = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2VlZSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjAiIGZpbGw9IiNhYWEiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5ObyBJbWFnZTwvdGV4dD48L3N2Zz4=';
 
@@ -86,6 +94,11 @@ const MyBookings = () => {
   const theme = useTheme();
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [leaseDialogOpen, setLeaseDialogOpen] = useState(false);
+  const [expandedBookings, setExpandedBookings] = useState({});
+
+  useEffect(() => {
+    fetchBookings();
+  }, []);
 
   const fetchBookings = async () => {
     try {
@@ -94,29 +107,41 @@ const MyBookings = () => {
         throw new Error('User not logged in');
       }
 
+      const token = userData.token;
+
       const response = await axios.get('/bookings/tenant', {
         headers: {
-          Authorization: `Bearer ${userData.token}`
+          Authorization: `Bearer ${token}`
         }
       });
 
-      if (response.data.success) {
-        setBookings(response.data.bookings);
+      if (response.data.success && Array.isArray(response.data.bookings)) {
+        // Show all bookings with proper structure
+        const validBookings = response.data.bookings.map(booking => ({
+          ...booking,
+          propertyDetails: booking.propertyId || {},
+          leaseTerms: booking.leaseTerms || {},
+          status: 'active',
+          paymentStatus: 'completed'
+        }));
+        setBookings(validBookings);
       } else {
-        throw new Error(response.data.message || 'Failed to fetch bookings');
+        throw new Error('Invalid response format');
       }
     } catch (error) {
       console.error('Error fetching bookings:', error);
-      setError(error.message);
-      toast.error('Failed to fetch bookings');
+      if (error.response?.status === 401) {
+        localStorage.removeItem('user');
+        navigate('/login');
+        toast.error('Session expired. Please login again.');
+      } else {
+        setError(error.message || 'Failed to fetch bookings');
+        toast.error('Failed to fetch bookings');
+      }
     } finally {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchBookings();
-  }, []);
 
   const getStatusIcon = (status) => {
     switch (status) {
@@ -131,16 +156,53 @@ const MyBookings = () => {
     }
   };
 
-  const handleViewLease = (booking) => {
-    setSelectedBooking(booking);
-    setLeaseDialogOpen(true);
+  const handleViewLease = (leaseId) => {
+    if (leaseId) {
+      navigate(`/tenant/lease/${leaseId}`);
+    } else {
+      toast.error('Lease ID not available');
+    }
+  };
+
+  const handleMakePayment = (bookingId) => {
+    if (bookingId) {
+      navigate(`/tenant/payment/${bookingId}`);
+    } else {
+      toast.error('Booking ID not available');
+    }
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-IN', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    if (!dateString) return 'Not set';
+    try {
+      return new Date(dateString).toLocaleDateString('en-IN', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    } catch (error) {
+      return 'Invalid date';
+    }
+  };
+
+  const handleExpandBooking = (bookingId) => {
+    setExpandedBookings(prev => ({
+      ...prev,
+      [bookingId]: !prev[bookingId]
+    }));
+  };
+
+  const handleRequestMaintenance = (propertyId) => {
+    if (!propertyId) {
+      toast.error('Property ID not available');
+      return;
+    }
+    // Extract just the ID if it's an object
+    const id = typeof propertyId === 'object' ? propertyId._id : propertyId;
+    navigate('/tenant/maintenancerequest', { 
+      state: { 
+        propertyId: id
+      } 
     });
   };
 
@@ -197,81 +259,173 @@ const MyBookings = () => {
               </TableHead>
               <TableBody>
                 {bookings.map((booking) => (
-                  <TableRow key={booking._id}>
-                    <TableCell>
-                      <Stack direction="row" spacing={2} alignItems="center">
-                        <CardMedia
-                          component="img"
-                          sx={{ width: 60, height: 60, borderRadius: 1 }}
-                          image={booking.property?.images?.[0] || DEFAULT_PROPERTY_IMAGE}
-                          alt={booking.property?.title || 'Property Image'}
+                  <React.Fragment key={booking._id}>
+                    <TableRow>
+                      <TableCell>
+                        <Stack direction="row" spacing={2} alignItems="center">
+                          <CardMedia
+                            component="img"
+                            sx={{ width: 60, height: 60, borderRadius: 1 }}
+                            image={booking.propertyDetails?.images?.[0] || DEFAULT_PROPERTY_IMAGE}
+                            alt={booking.propertyDetails?.title || 'Property Image'}
+                          />
+                          <Typography variant="body2">
+                            {booking.propertyDetails?.title || 'Property Not Available'}
+                          </Typography>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <LocationOn color="primary" fontSize="small" />
+                          <Typography variant="body2">
+                            {booking.propertyDetails?.address?.street || 'Location Not Available'}
+                          </Typography>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <Event color="primary" fontSize="small" />
+                          <Typography variant="body2">
+                            {formatDate(booking.leaseTerms?.startDate)}
+                          </Typography>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <Event color="primary" fontSize="small" />
+                          <Typography variant="body2">
+                            {formatDate(booking.leaseTerms?.endDate)}
+                          </Typography>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <Payment color="primary" fontSize="small" />
+                          <Typography variant="body2">
+                            ₹{Number(booking.leaseTerms?.rentAmount || 0).toLocaleString('en-IN')}
+                          </Typography>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
+                        <StatusChip
+                          icon={getStatusIcon('active')}
+                          label="Payment Completed"
+                          status="success"
                         />
-                        <Typography variant="body2">
-                          {booking.property?.title || 'Property Not Available'}
-                        </Typography>
-                      </Stack>
-                    </TableCell>
-                    <TableCell>
-                      <Stack direction="row" spacing={1} alignItems="center">
-                        <LocationOn color="primary" fontSize="small" />
-                        <Typography variant="body2">
-                          {booking.property?.location || 'Location Not Available'}
-                        </Typography>
-                      </Stack>
-                    </TableCell>
-                    <TableCell>
-                      <Stack direction="row" spacing={1} alignItems="center">
-                        <Event color="primary" fontSize="small" />
-                        <Typography variant="body2">
-                          {formatDate(booking.leaseTerms.startDate)}
-                        </Typography>
-                      </Stack>
-                    </TableCell>
-                    <TableCell>
-                      <Stack direction="row" spacing={1} alignItems="center">
-                        <Event color="primary" fontSize="small" />
-                        <Typography variant="body2">
-                          {formatDate(booking.leaseTerms.endDate)}
-                        </Typography>
-                      </Stack>
-                    </TableCell>
-                    <TableCell>
-                      <Stack direction="row" spacing={1} alignItems="center">
-                        <Payment color="primary" fontSize="small" />
-                        <Typography variant="body2">
-                          ₹{(booking.leaseTerms.rentAmount || 0).toLocaleString('en-IN')}
-                        </Typography>
-                      </Stack>
-                    </TableCell>
-                    <TableCell>
-                      <StatusChip
-                        icon={getStatusIcon(booking.status)}
-                        label={booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
-                        status={booking.status}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Stack direction="row" spacing={1}>
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          onClick={() => handleViewLease(booking)}
-                        >
-                          View Lease
-                        </Button>
-                        {booking.status === 'pending_payment' && (
+                      </TableCell>
+                      <TableCell>
+                        <Stack direction="row" spacing={1}>
+                          {booking.leaseId && (
+                            <Button
+                              variant="outlined"
+                              size="small"
+                              onClick={() => handleViewLease(booking.leaseId)}
+                            >
+                              View Lease
+                            </Button>
+                          )}
                           <Button
                             variant="contained"
                             size="small"
                             color="primary"
-                            onClick={() => handlePayment(booking)}
+                            onClick={() => handleRequestMaintenance(booking.propertyId)}
                           >
-                            Pay Now
+                            Request Maintenance
                           </Button>
-                        )}
-                      </Stack>
-                    </TableCell>
-                  </TableRow>
+                          <IconButton
+                            size="small"
+                            onClick={() => handleExpandBooking(booking._id)}
+                          >
+                            {expandedBookings[booking._id] ? <ExpandLess /> : <ExpandMore />}
+                          </IconButton>
+                        </Stack>
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={7}>
+                        <Collapse in={expandedBookings[booking._id]} timeout="auto" unmountOnExit>
+                          <Box sx={{ margin: 2 }}>
+                            <Grid container spacing={2}>
+                              <Grid item xs={12} md={6}>
+                                <Card>
+                                  <CardMedia
+                                    component="img"
+                                    height="200"
+                                    image={booking.propertyDetails?.images?.[0] || DEFAULT_PROPERTY_IMAGE}
+                                    alt={booking.propertyDetails?.title}
+                                  />
+                                  <CardContent>
+                                    <Typography variant="h6" gutterBottom>
+                                      {booking.propertyDetails?.title}
+                                    </Typography>
+                                    <Typography variant="body2" color="text.secondary" paragraph>
+                                      {booking.propertyDetails?.description}
+                                    </Typography>
+                                    <Stack direction="row" spacing={2}>
+                                      <Chip
+                                        icon={<Bed />}
+                                        label={`${booking.propertyDetails?.bedrooms || 0} Beds`}
+                                      />
+                                      <Chip
+                                        icon={<Bathtub />}
+                                        label={`${booking.propertyDetails?.bathrooms || 0} Baths`}
+                                      />
+                                      <Chip
+                                        icon={<SquareFoot />}
+                                        label={`${booking.propertyDetails?.area || 0} sq ft`}
+                                      />
+                                    </Stack>
+                                  </CardContent>
+                                </Card>
+                              </Grid>
+                              <Grid item xs={12} md={6}>
+                                <Card>
+                                  <CardContent>
+                                    <Typography variant="h6" gutterBottom>
+                                      Property Details
+                                    </Typography>
+                                    <Stack spacing={2}>
+                                      <Box>
+                                        <Typography variant="subtitle2" color="text.secondary">
+                                          Address
+                                        </Typography>
+                                        <Typography variant="body1">
+                                          {booking.propertyDetails?.address?.street}
+                                        </Typography>
+                                        <Typography variant="body2" color="text.secondary">
+                                          {booking.propertyDetails?.address?.city}, {booking.propertyDetails?.address?.state}
+                                        </Typography>
+                                      </Box>
+                                      <Box>
+                                        <Typography variant="subtitle2" color="text.secondary">
+                                          Amenities
+                                        </Typography>
+                                        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                                          {booking.propertyDetails?.amenities?.map((amenity, index) => (
+                                            <Chip key={index} label={amenity} size="small" />
+                                          ))}
+                                        </Stack>
+                                      </Box>
+                                      <Box>
+                                        <Typography variant="subtitle2" color="text.secondary">
+                                          Features
+                                        </Typography>
+                                        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                                          {booking.propertyDetails?.features?.map((feature, index) => (
+                                            <Chip key={index} label={feature} size="small" />
+                                          ))}
+                                        </Stack>
+                                      </Box>
+                                    </Stack>
+                                  </CardContent>
+                                </Card>
+                              </Grid>
+                            </Grid>
+                          </Box>
+                        </Collapse>
+                      </TableCell>
+                    </TableRow>
+                  </React.Fragment>
                 ))}
               </TableBody>
             </Table>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Input, Select, Space, Modal, message } from 'antd';
-import { SearchOutlined, EyeOutlined, StopOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import { Table, Button, Input, Select, Space, Modal, message, Popconfirm } from 'antd';
+import { SearchOutlined, EyeOutlined, StopOutlined, CheckCircleOutlined, DeleteOutlined } from '@ant-design/icons';
 import { getAllUsers, getAdminToken } from '../../../../utils/adminAuth';
 
 const { Search } = Input;
@@ -69,6 +69,21 @@ const AdminUsers = () => {
               Unblock
             </Button>
           )}
+          <Popconfirm
+            title="Are you sure you want to delete this user?"
+            description="This action cannot be undone."
+            onConfirm={() => handleDeleteUser(record)}
+            okText="Yes"
+            cancelText="No"
+            okButtonProps={{ danger: true }}
+          >
+            <Button
+              danger
+              icon={<DeleteOutlined />}
+            >
+              Delete
+            </Button>
+          </Popconfirm>
         </Space>
       ),
     },
@@ -143,6 +158,33 @@ const AdminUsers = () => {
     } catch (error) {
       console.error('Error unblocking user:', error);
       message.error('Failed to unblock user');
+    }
+  };
+
+  const handleDeleteUser = async (user) => {
+    try {
+      const token = getAdminToken();
+      const userType = user.userType.toLowerCase(); // Convert 'Tenant' or 'Landlord' to 'tenant' or 'landlord'
+      
+      const response = await fetch(`http://localhost:1909/admin/users/${userType}/${user._id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete user');
+      }
+
+      const data = await response.json();
+      message.success(data.message || 'User deleted successfully');
+      fetchUsers(); // Refresh the user list
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      message.error(error.message || 'Failed to delete user');
     }
   };
 

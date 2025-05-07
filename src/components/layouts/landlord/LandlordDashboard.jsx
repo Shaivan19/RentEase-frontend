@@ -42,6 +42,8 @@ const LandlordDashboard = () => {
   const [notifications, setNotifications] = useState([]);
   const [notificationsAnchor, setNotificationsAnchor] = useState(null);
   const [user, setUser] = useState(null);
+  const [totalEarnings, setTotalEarnings] = useState(0);
+  const [lastPaymentCheck, setLastPaymentCheck] = useState(new Date());
 
   const [dashboardData, setDashboardData] = useState({
     properties: [],
@@ -65,7 +67,7 @@ const LandlordDashboard = () => {
     }
   }, []);
 
-  // Add event listener for property status updates
+  // Add event listeners for property status and payment updates
   useEffect(() => {
     const handlePropertyStatusUpdate = (event) => {
       console.log('Property status updated event received:', event.detail);
@@ -73,41 +75,118 @@ const LandlordDashboard = () => {
       fetchDashboardData();
     };
 
+    const handlePaymentReceived = (event) => {
+      console.log('Payment received event received:', event.detail);
+      if (event.detail && event.detail.amount) {
+        // Update total earnings immediately
+        setTotalEarnings(prev => prev + event.detail.amount);
+        // Refresh dashboard data to update occupancy rate and other stats
+        fetchDashboardData();
+      }
+    };
+
     window.addEventListener('propertyStatusUpdated', handlePropertyStatusUpdate);
+    window.addEventListener('paymentReceived', handlePaymentReceived);
     
-    // Clean up event listener on component unmount
+    // Clean up event listeners on component unmount
     return () => {
       window.removeEventListener('propertyStatusUpdated', handlePropertyStatusUpdate);
+      window.removeEventListener('paymentReceived', handlePaymentReceived);
     };
   }, []);
+
+  // Add polling mechanism for payments and status updates
+  useEffect(() => {
+    const checkForUpdates = async () => {
+      try {
+        const userData = JSON.parse(localStorage.getItem('user'));
+        if (!userData || !userData.token) {
+          console.error("No user token found");
+          return;
+        }
+
+        const response = await axios.get('/landlord/dashboard', {
+          headers: {
+            Authorization: `Bearer ${userData.token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.data.success) {
+          // Check if any property statuses have changed
+          const currentProperties = response.data.data.properties;
+          const oldProperties = dashboardData.properties;
+          
+          const hasStatusChanged = currentProperties.some((prop, index) => 
+            oldProperties[index]?.status !== prop.status
+          );
+
+          if (hasStatusChanged) {
+            console.log('Property status changes detected, updating dashboard');
+            setDashboardData(prev => ({
+              ...response.data.data,
+              monthlyEarnings: prev.monthlyEarnings
+            }));
+          }
+        }
+      } catch (error) {
+        console.error("Error checking for updates:", error);
+      }
+    };
+
+    // Check for updates every 5 seconds
+    const interval = setInterval(checkForUpdates, 5000);
+
+    // Clean up interval on component unmount
+    return () => clearInterval(interval);
+  }, [dashboardData.properties]);
 
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
       const userData = JSON.parse(localStorage.getItem('user'));
       if (!userData || !userData.token) {
-        console.error("No user token found");
+        console.error("No user token found in localStorage");
         return;
       }
+
+      console.log('User data from localStorage:', userData);
 
       const [dashboardResponse, earningsResponse] = await Promise.all([
         axios.get('/landlord/dashboard', {
           headers: {
-            Authorization: `Bearer ${userData.token}`
+            Authorization: `Bearer ${userData.token}`,
+            'Content-Type': 'application/json'
           }
+        }).catch(error => {
+          console.error('Dashboard API error:', error.response || error);
+          throw error;
         }),
         axios.get('/payments/landlord-earnings', {
           headers: {
-            Authorization: `Bearer ${userData.token}`
+            Authorization: `Bearer ${userData.token}`,
+            'Content-Type': 'application/json'
           }
+        }).catch(error => {
+          console.error('Earnings API error:', error.response || error);
+          throw error;
         })
       ]);
 
       if (dashboardResponse.data.success && earningsResponse.data.success) {
+        console.log('Dashboard response:', dashboardResponse.data);
+        console.log('Earnings response:', earningsResponse.data);
+        
+        // Log the properties array specifically
+        console.log('Properties in response:', dashboardResponse.data.data.properties);
+        
         setDashboardData({
           ...dashboardResponse.data.data,
           monthlyEarnings: earningsResponse.data.monthlyEarnings
         });
+
+        // Set total earnings from the API response
+        setTotalEarnings(earningsResponse.data.totalEarnings || 0);
         
         // Transform visits into notifications
         const visitNotifications = dashboardResponse.data.data.upcomingVisits.map(visit => ({
@@ -120,9 +199,20 @@ const LandlordDashboard = () => {
         }));
         
         setNotifications(visitNotifications);
+        setLastUpdated(new Date());
+      } else {
+        console.error("Error in API responses:", {
+          dashboard: dashboardResponse.data,
+          earnings: earningsResponse.data
+        });
       }
     } catch (error) {
       console.error("Error fetching dashboard data:", error.response || error);
+      if (error.response?.status === 401) {
+        console.error("Authentication error. Please log in again.");
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
     } finally {
       setLoading(false);
     }
@@ -158,14 +248,6 @@ const LandlordDashboard = () => {
 
   const pendingBookings = dashboardData.recentBookings.filter((booking) => booking.status.toLowerCase() === "pending").length;
 
-  const totalEarnings = dashboardData.properties.filter(property => property.status === 'Occupied')
-    .reduce((total, property) => total + (property.price || 0), 0);
-
-  const handleRefresh = () => {
-    setLastUpdated(new Date());
-    fetchDashboardData();
-  };
-
   // Calculate earnings trend
   const calculateEarningsTrend = () => {
     if (!dashboardData.monthlyEarnings || dashboardData.monthlyEarnings.length < 2) return "No data";
@@ -178,6 +260,11 @@ const LandlordDashboard = () => {
     
     const trend = ((currentEarnings - lastMonthEarnings) / lastMonthEarnings) * 100;
     return `${trend > 0 ? '+' : ''}${trend.toFixed(1)}%`;
+  };
+
+  const handleRefresh = () => {
+    setLastUpdated(new Date());
+    fetchDashboardData();
   };
 
   if (loading) {

@@ -7,6 +7,7 @@ import SupportAgentIcon from "@mui/icons-material/SupportAgent";
 import LogoutIcon from "@mui/icons-material/Logout";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import BuildIcon from "@mui/icons-material/Build";
 import { useNavigate, useLocation } from "react-router-dom";
 
 const TenantSidebar = ({ drawerOpen, toggleDrawer }) => {
@@ -15,6 +16,7 @@ const TenantSidebar = ({ drawerOpen, toggleDrawer }) => {
   // const [openPayments, setOpenPayments] = useState(false);
   const [propertiesOpen, setPropertiesOpen] = useState(false);
   const [bookingsOpen, setBookingsOpen] = useState(false);
+  const [maintenanceOpen, setMaintenanceOpen] = useState(false);
 
 
   const handleLogout = () => {
@@ -140,6 +142,21 @@ const TenantSidebar = ({ drawerOpen, toggleDrawer }) => {
             </ListItemButton>
           </List>
         </Collapse>
+
+        {/* Maintenance Section */}
+        <ListItemButton 
+          selected={location.pathname === "/tenant/maintenancerequest"}
+          onClick={() => {
+            navigate("/tenant/maintenancerequest");
+            handleDrawerClose();
+          }}
+          sx={{ "&.Mui-selected": { backgroundColor: "#282846" } }}
+        >
+          <ListItemIcon sx={{ color: "white" }}>
+            <BuildIcon />
+          </ListItemIcon>
+          <ListItemText primary="Maintenance" />
+        </ListItemButton>
 
         {/* Support */}
         <ListItemButton 

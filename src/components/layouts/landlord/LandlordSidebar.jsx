@@ -29,46 +29,41 @@ import {
   Settings,
   Notifications,
   Assessment,
-  Close,
+  Close,Build,
 } from "@mui/icons-material";
 import { Link, useLocation } from "react-router-dom";
 
 const menuItems = [
   {
+    id: "dashboard",
     title: "Dashboard",
     icon: <Dashboard />,
     path: "/landlord/dashboard",
   },
   {
+    id: "properties",
     title: "Properties",
     icon: <Business />,
     path: "/landlord/properties",
     subItems: [
-      { title: "View Properties", path: "/landlord/properties", icon: <Business /> },
-      { title: "Add Property", path: "/landlord/addnewproperty", icon: <AddHome /> },
+      { id: "view-properties", title: "View Properties", path: "/landlord/properties", icon: <Business /> },
+      { id: "add-property", title: "Add Property", path: "/landlord/addnewproperty", icon: <AddHome /> },
     ],
   },
   {
-    title: "Earnings",
-    icon: <MonetizationOn />,
-    path: "/landlord/earnings",
+    id: "maintenance",
+    title: "Maintenance Requests",
+    icon: <Build />,
+    path: "/landlord/maintenance",
   },
   {
-    title: "Reports",
-    icon: <Assessment />,
-    path: "/landlord/reports",
-  },
-  {
-    title: "Notifications",
-    icon: <Notifications />,
-    path: "/landlord/notifications",
-  },
-  {
+    id: "profile",
     title: "Profile",
     icon: <Person />,
     path: "/landlord/profile",
   },
   {
+    id: "settings",
     title: "Settings",
     icon: <Settings />,
     path: "/landlord/settings",
@@ -156,7 +151,7 @@ const LandlordSidebar = ({ isOpen, onClose }) => {
       {/* Menu Items */}
       <List sx={{ p: 1 }}>
         {menuItems.map((item) => (
-          <React.Fragment key={item.title}>
+          <React.Fragment key={item.id}>
             {item.subItems ? (
               <>
                 <ListItemButton
@@ -188,7 +183,7 @@ const LandlordSidebar = ({ isOpen, onClose }) => {
                   <List component="div" disablePadding>
                     {item.subItems.map((subItem) => (
                       <ListItemButton
-                        key={subItem.title}
+                        key={subItem.id}
                         component={Link}
                         to={subItem.path}
                         sx={{
@@ -253,8 +248,11 @@ const LandlordSidebar = ({ isOpen, onClose }) => {
       <Box sx={{ mt: "auto", p: 2 }}>
         <Divider sx={{ mb: 2 }} />
         <ListItemButton
-          component={Link}
-          to="/logout"
+          onClick={() => {
+            localStorage.removeItem('user');
+            localStorage.removeItem('token');
+            window.location.href = '/login';
+          }}
           sx={{
             borderRadius: 1,
             color: theme.palette.error.main,

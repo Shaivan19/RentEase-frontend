@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Input, Select, Space, Modal, message, Tag } from 'antd';
 import { SearchOutlined, EyeOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
+import { getAdminToken } from '../../../../utils/adminAuth';
 import axios from 'axios';
 
 const { Search } = Input;
@@ -93,14 +94,39 @@ const AdminBookings = () => {
   const fetchBookings = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('/admin/bookings', {
+      const token = getAdminToken();
+      
+      if (!token) {
+        message.error('Admin authentication required');
+        return;
+      }
+
+      const response = await axios.get('http://localhost:1909/admin/bookings', {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('adminToken')}`,
-        },
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
-      setBookings(response.data.bookings);
+
+      if (response.data && response.data.success && response.data.bookings) {
+        setBookings(response.data.bookings);
+      } else {
+        throw new Error('Invalid response format');
+      }
     } catch (error) {
-      message.error('Failed to fetch bookings');
+      console.error('Error fetching bookings:', error);
+      if (error.response) {
+        if (error.response.status === 401) {
+          message.error('Session expired. Please login again.');
+          // Optionally redirect to login
+          // window.location.href = '/admin/login';
+        } else {
+          message.error(error.response.data?.message || 'Failed to fetch bookings');
+        }
+      } else {
+        message.error('Failed to connect to server');
+      }
+      setBookings([]);
     } finally {
       setLoading(false);
     }
@@ -113,37 +139,63 @@ const AdminBookings = () => {
 
   const handleConfirmBooking = async (booking) => {
     try {
-      await axios.put(
-        `/admin/bookings/${booking._id}/confirm`,
+      const token = getAdminToken();
+      if (!token) {
+        message.error('Admin authentication required');
+        return;
+      }
+
+      const response = await axios.put(
+        `http://localhost:1909/admin/bookings/${booking._id}/confirm`,
         {},
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('adminToken')}`,
-          },
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
         }
       );
-      message.success('Booking confirmed successfully');
-      fetchBookings();
+
+      if (response.data.success) {
+        message.success('Booking confirmed successfully');
+        fetchBookings();
+      } else {
+        throw new Error(response.data.message || 'Failed to confirm booking');
+      }
     } catch (error) {
-      message.error('Failed to confirm booking');
+      console.error('Error confirming booking:', error);
+      message.error(error.response?.data?.message || 'Failed to confirm booking');
     }
   };
 
   const handleCancelBooking = async (booking) => {
     try {
-      await axios.put(
-        `/admin/bookings/${booking._id}/cancel`,
+      const token = getAdminToken();
+      if (!token) {
+        message.error('Admin authentication required');
+        return;
+      }
+
+      const response = await axios.put(
+        `http://localhost:1909/admin/bookings/${booking._id}/cancel`,
         {},
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('adminToken')}`,
-          },
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
         }
       );
-      message.success('Booking cancelled successfully');
-      fetchBookings();
+
+      if (response.data.success) {
+        message.success('Booking cancelled successfully');
+        fetchBookings();
+      } else {
+        throw new Error(response.data.message || 'Failed to cancel booking');
+      }
     } catch (error) {
-      message.error('Failed to cancel booking');
+      console.error('Error cancelling booking:', error);
+      message.error(error.response?.data?.message || 'Failed to cancel booking');
     }
   };
 
@@ -187,7 +239,7 @@ const AdminBookings = () => {
 
       <Modal
         title="Booking Details"
-        visible={isModalVisible}
+        open={isModalVisible}
         onCancel={() => setIsModalVisible(false)}
         footer={null}
         width={800}

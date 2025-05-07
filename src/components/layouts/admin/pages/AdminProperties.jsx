@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Table, Button, Input, Select, Space, Modal, message, Tag, Form, InputNumber } from 'antd';
 import { SearchOutlined, EyeOutlined, CheckCircleOutlined, CloseCircleOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { getAdminToken } from '../../../../utils/adminAuth';
+import axios from 'axios';
 
 const { Search } = Input;
 const { Option } = Select;
@@ -109,23 +110,34 @@ const AdminProperties = () => {
     try {
       setLoading(true);
       const token = getAdminToken();
-      const response = await fetch('http://localhost:1909/admin/properties', {
+      
+      const response = await axios.get('http://localhost:1909/admin/properties', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch properties');
+      if (response.data && response.data.success && response.data.properties) {
+        console.log('Properties data:', response.data);
+        setProperties(response.data.properties);
+      } else {
+        throw new Error('Invalid response format from server');
       }
-
-      const data = await response.json();
-      console.log('Properties data:', data); // Debug log
-      setProperties(data.properties || []);
     } catch (error) {
       console.error('Error fetching properties:', error);
-      message.error('Failed to fetch properties');
+      if (error.response) {
+        // Server responded with an error
+        const errorMessage = error.response.data?.message || 'Server error occurred';
+        message.error(errorMessage);
+        console.error('Server error details:', error.response.data);
+      } else if (error.request) {
+        // No response received
+        message.error('Unable to connect to server. Please check if the server is running.');
+      } else {
+        // Other errors
+        message.error(error.message || 'Failed to fetch properties');
+      }
       setProperties([]);
     } finally {
       setLoading(false);
@@ -286,7 +298,7 @@ const AdminProperties = () => {
       {/* View Property Modal */}
       <Modal
         title="Property Details"
-        visible={isModalVisible}
+        open={isModalVisible}
         onCancel={() => setIsModalVisible(false)}
         footer={null}
         width={800}
@@ -333,14 +345,16 @@ const AdminProperties = () => {
             {selectedProperty.images && selectedProperty.images.length > 0 && (
               <div className="mt-4">
                 <p><strong>Images:</strong></p>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-3 gap-4">
                   {selectedProperty.images.map((image, index) => (
-                    <img
-                      key={index}
-                      src={image}
-                      alt={`Property ${index + 1}`}
-                      className="w-full h-32 object-cover rounded"
-                    />
+                    <div key={index} className="relative aspect-video overflow-hidden rounded-lg">
+                      <img
+                        src={image}
+                        alt={`Property ${index + 1}`}
+                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                        style={{ maxHeight: '200px' }}
+                      />
+                    </div>
                   ))}
                 </div>
               </div>
@@ -352,7 +366,7 @@ const AdminProperties = () => {
       {/* Edit Property Modal */}
       <Modal
         title="Edit Property"
-        visible={isEditModalVisible}
+        open={isEditModalVisible}
         onCancel={() => setIsEditModalVisible(false)}
         onOk={() => form.submit()}
         okText="Update"

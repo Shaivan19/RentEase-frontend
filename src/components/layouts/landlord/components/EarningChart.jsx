@@ -10,7 +10,7 @@ import {
   Area,
   AreaChart,
 } from "recharts";
-import { Box, useTheme } from "@mui/material";
+import { Box, useTheme, Alert, Snackbar } from "@mui/material";
 import { formatToRupees } from "../../../../utils/Currency";
 
 const CustomTooltip = ({ active, payload, label }) => {
@@ -60,58 +60,120 @@ const CustomTooltip = ({ active, payload, label }) => {
 const EarningsChart = ({ data: initialData }) => {
   const theme = useTheme();
   const [chartData, setChartData] = useState(initialData);
+  const [error, setError] = useState(null);
+  const [showError, setShowError] = useState(false);
 
   // Format the currency for Y-axis ticks
   const formatYAxis = (value) => formatToRupees(value);
 
-  // Add event listener for property status updates to refresh chart data
+  // Add event listener for payment updates
   useEffect(() => {
-    const handlePropertyStatusUpdate = (event) => {
-      console.log('Property status updated event received in EarningsChart:', event.detail);
-      if (event.detail && event.detail.earnings) {
-        // Update the chart data with new earnings
-        const currentDate = new Date();
-        const currentMonth = currentDate.toLocaleString('default', { month: 'short' });
-        
-        setChartData(prevData => {
-          const newData = [...prevData];
-          const currentMonthIndex = newData.findIndex(item => item.month === currentMonth);
+    const handlePaymentUpdate = (event) => {
+      console.log('Payment received in EarningsChart:', event.detail);
+      try {
+        if (event.detail && event.detail.amount) {
+          const currentDate = new Date();
+          const currentMonth = currentDate.toLocaleString('default', { month: 'short' });
           
-          if (currentMonthIndex !== -1) {
-            // Update existing month's earnings
-            newData[currentMonthIndex] = {
-              ...newData[currentMonthIndex],
-              earnings: newData[currentMonthIndex].earnings + event.detail.earnings
-            };
-          } else {
-            // Add new month's data
-            newData.push({
-              month: currentMonth,
-              earnings: event.detail.earnings,
-              target: newData[0]?.target || 0 // Use the same target as other months
-            });
-          }
-          
-          return newData;
-        });
+          setChartData(prevData => {
+            if (!prevData || !Array.isArray(prevData)) {
+              setError('Invalid chart data format');
+              setShowError(true);
+              return prevData;
+            }
+
+            const newData = [...prevData];
+            const currentMonthIndex = newData.findIndex(item => item.month === currentMonth);
+            
+            if (currentMonthIndex !== -1) {
+              // Update existing month's earnings
+              newData[currentMonthIndex] = {
+                ...newData[currentMonthIndex],
+                earnings: newData[currentMonthIndex].earnings + event.detail.amount
+              };
+            } else {
+              // Add new month's data
+              newData.push({
+                month: currentMonth,
+                earnings: event.detail.amount,
+                target: newData[0]?.target || 0 // Use the same target as other months
+              });
+            }
+            
+            console.log('Updated chart data:', newData);
+            return newData;
+          });
+        } else {
+          setError('Invalid payment data received');
+          setShowError(true);
+        }
+      } catch (err) {
+        console.error('Error updating chart data:', err);
+        setError('Failed to update earnings chart');
+        setShowError(true);
       }
     };
 
-    window.addEventListener('propertyStatusUpdated', handlePropertyStatusUpdate);
+    window.addEventListener('paymentReceived', handlePaymentUpdate);
     
-    // Clean up event listener on component unmount
     return () => {
-      window.removeEventListener('propertyStatusUpdated', handlePropertyStatusUpdate);
+      window.removeEventListener('paymentReceived', handlePaymentUpdate);
     };
   }, []);
 
   // Update chart data when initialData changes
   useEffect(() => {
-    setChartData(initialData);
+    try {
+      console.log('Initial data changed:', initialData);
+      if (!initialData || !Array.isArray(initialData)) {
+        setError('Invalid initial data format');
+        setShowError(true);
+        return;
+      }
+      
+      // Ensure we have data for all months
+      const currentMonth = new Date().getMonth();
+      const months = Array.from({ length: 12 }, (_, i) => {
+        const date = new Date(2023, i);
+        return date.toLocaleString('default', { month: 'short' });
+      });
+      
+      const completeData = months.map(month => {
+        const existingMonth = initialData.find(item => item.month === month);
+        return existingMonth || {
+          month,
+          earnings: 0,
+          target: initialData[0]?.target || 0
+        };
+      });
+      
+      console.log('Setting chart data:', completeData);
+      setChartData(completeData);
+    } catch (err) {
+      console.error('Error setting initial chart data:', err);
+      setError('Failed to initialize earnings chart');
+      setShowError(true);
+    }
   }, [initialData]);
+
+  const handleCloseError = () => {
+    setShowError(false);
+  };
 
   return (
     <Box sx={{ width: "100%", height: 300 }}>
+      {error && (
+        <Snackbar
+          open={showError}
+          autoHideDuration={6000}
+          onClose={handleCloseError}
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        >
+          <Alert onClose={handleCloseError} severity="error" sx={{ width: '100%' }}>
+            {error}
+          </Alert>
+        </Snackbar>
+      )}
       <ResponsiveContainer>
         <AreaChart data={chartData}>
           <defs>
