@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 // import { UserSidebar } from './components/layouts/UserSidebar'
 // import './App.css'
-import "./assets/css/Adminlte.css"
+import "./assets/css/adminte.css"
 import "./assets/css/adminlte.min.css"
 // import { Route, Routes } from 'react-router-dom'
 import UserProfile from './components/user/UserProfile'
